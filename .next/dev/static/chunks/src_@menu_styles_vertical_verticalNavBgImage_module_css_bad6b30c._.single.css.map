@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 1, "column": 0}, "map": {"version":3,"sources":["turbopack:///[project]/src/@menu/styles/vertical/verticalNavBgImage.module.css"],"sourcesContent":[".root {\n  inline-size: 100%;\n  block-size: 100%;\n  position: absolute;\n  inset-block-start: 0;\n  inset-inline-start: 0;\n  object-fit: cover;\n  object-position: center;\n  z-index: 2;\n}\n"],"names":[],"mappings":"AAAA"}}]
-}
