@@ -1,0 +1,19 @@
+/* [project]/src/@menu/styles/horizontal/horizontalUl.module.css [app-client] (css) */
+.horizontalUl-module__rfHmma__root {
+  flex-wrap: wrap;
+  align-items: center;
+  block-size: 100%;
+  inline-size: 100%;
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+}
+
+.horizontalUl-module__rfHmma__root .horizontalUl-module__rfHmma__li:not(:last-of-type) {
+  margin-inline-end: 4px;
+}
+
+/*# sourceMappingURL=src_%40menu_styles_horizontal_horizontalUl_module_css_bad6b30c._.single.css.map*/

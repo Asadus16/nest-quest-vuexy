@@ -1,0 +1,22 @@
+{
+  "app": {
+    "[project]/src/app/[lang]/(auth)/login/page": [
+      "static/media/fa0520225c6f3d07-s.p.d28ba1c8.woff2"
+    ],
+    "[project]/src/app/[lang]/(auth)/register/[role]/page": [
+      "static/media/fa0520225c6f3d07-s.p.d28ba1c8.woff2"
+    ],
+    "[project]/src/app/[lang]/(dashboard)/dashboards/analytics/page": [
+      "static/media/fa0520225c6f3d07-s.p.d28ba1c8.woff2"
+    ],
+    "[project]/src/app/[lang]/login/page": [
+      "static/media/fa0520225c6f3d07-s.p.d28ba1c8.woff2"
+    ],
+    "[project]/src/app/[lang]/select-role/page": [
+      "static/media/fa0520225c6f3d07-s.p.d28ba1c8.woff2"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pages": {},
+  "pagesUsingSizeAdjust": false
+}

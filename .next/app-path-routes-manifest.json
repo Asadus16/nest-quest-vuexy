@@ -1,0 +1,8 @@
+{
+  "/[lang]/(auth)/login/page": "/[lang]/login",
+  "/[lang]/(auth)/register/[role]/page": "/[lang]/register/[role]",
+  "/[lang]/(dashboard)/dashboards/analytics/page": "/[lang]/dashboards/analytics",
+  "/[lang]/select-role/page": "/[lang]/select-role",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found"
+}

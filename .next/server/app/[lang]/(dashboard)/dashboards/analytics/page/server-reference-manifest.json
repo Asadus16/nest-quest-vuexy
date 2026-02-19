@@ -1,0 +1,20 @@
+{
+  "node": {
+    "0038bd246d71dddc32e402f93c37b737c88c6680ac": {
+      "workers": {
+        "app/[lang]/(dashboard)/dashboards/analytics/page": {
+          "moduleId": 92784,
+          "async": false,
+          "exportedName": "getProfileData",
+          "filename": "src/app/server/actions.ts"
+        }
+      },
+      "layer": {
+        "app/[lang]/(dashboard)/dashboards/analytics/page": "rsc"
+      },
+      "exportedName": "getProfileData",
+      "filename": "src/app/server/actions.ts"
+    }
+  },
+  "edge": {}
+}
