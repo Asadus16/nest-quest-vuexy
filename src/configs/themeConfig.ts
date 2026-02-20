@@ -37,7 +37,7 @@ const themeConfig: Config = {
   settingsCookieName: 'nest-quest-theme',
   mode: 'light',
   skin: 'default',
-  semiDark: false,
+  semiDark: true,
   layout: 'vertical',
   layoutPadding: 24,
   compactContentWidth: 1440,

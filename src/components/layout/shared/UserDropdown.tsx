@@ -69,7 +69,10 @@ const UserDropdown = () => {
   }
 
   const handleUserLogout = () => {
-    router.push(getLocalizedUrl('/login', locale as Locale))
+    // Clear the role cookie
+    document.cookie = 'user-role=; path=/; max-age=0'
+
+    router.push(getLocalizedUrl('/select-role', locale as Locale))
   }
 
   return (

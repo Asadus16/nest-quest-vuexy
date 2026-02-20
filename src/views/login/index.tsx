@@ -59,13 +59,13 @@ const Login = () => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // No backend validation for now - redirect based on role
-    if (role === 'property-manager') {
-      router.push(getLocalizedUrl('/dashboards/analytics', locale as Locale))
-    } else {
-      // For other roles, redirect to dashboard as well for now
-      router.push(getLocalizedUrl('/dashboards/analytics', locale as Locale))
+    // Save role to cookie
+    if (role) {
+      document.cookie = `user-role=${role}; path=/; max-age=${60 * 60 * 24 * 30}` // 30 days
     }
+
+    // Full page navigation so the server re-reads the role cookie
+    window.location.href = getLocalizedUrl('/dashboards/analytics', locale as Locale)
   }
 
   // Build register URL - if role is present, go to role-specific register

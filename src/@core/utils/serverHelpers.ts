@@ -7,6 +7,8 @@ import 'server-only'
 // Type Imports
 import type { Settings } from '@core/contexts/settingsContext'
 import type { SystemMode } from '@core/types'
+import type { UserRole } from '@/types/userTypes'
+import { validRoles } from '@/types/userTypes'
 
 // Config Imports
 import themeConfig from '@configs/themeConfig'
@@ -48,4 +50,15 @@ export const getSkin = async () => {
   const settingsCookie = await getSettingsFromCookie()
 
   return settingsCookie.skin || 'default'
+}
+
+export const getUserRole = async (): Promise<UserRole | null> => {
+  const cookieStore = await cookies()
+  const roleCookie = cookieStore.get('user-role')?.value
+
+  if (roleCookie && validRoles.includes(roleCookie as UserRole)) {
+    return roleCookie as UserRole
+  }
+
+  return null
 }

@@ -17,6 +17,7 @@ import Providers from '@components/Providers'
 // Style Imports
 import '@/app/globals.css'
 import '@/assets/iconify-icons/generated-icons.css'
+import 'react-perfect-scrollbar/dist/css/styles.css'
 
 export const metadata = {
   title: 'Nest Quest - Find Your Perfect Home',

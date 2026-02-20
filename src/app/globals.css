@@ -70,6 +70,12 @@
   --breakpoint-lg: 1200px;
   --breakpoint-xl: 1536px;
   --breakpoint-2xl: 1920px;
+
+  --z-header: var(--header-z-index);
+  --z-footer: var(--footer-z-index);
+  --z-customizer: var(--customizer-z-index);
+  --z-search: var(--search-z-index);
+  --z-drawer: var(--drawer-z-index);
 }
 
 :root {
@@ -78,6 +84,12 @@
   --primary-color: var(--mui-palette-primary-main);
   --background-color: var(--mui-palette-background-default);
   --background-color-rgb: var(--mui-palette-background-paperChannel);
+  --header-height: 54px;
+  --header-z-index: 1100;
+  --footer-z-index: 10;
+  --customizer-z-index: 1200;
+  --search-z-index: 1500;
+  --drawer-z-index: 1200;
   --backdrop-color: rgb(var(--mui-mainColorChannels-light) / 0.5);
   --mui-mainColorChannels-shadow: var(--mui-mainColorChannels-lightShadow);
 }
