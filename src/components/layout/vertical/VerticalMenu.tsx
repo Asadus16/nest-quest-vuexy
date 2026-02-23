@@ -12,7 +12,7 @@ import type { getDictionary } from '@/utils/getDictionary'
 import type { VerticalMenuContextProps } from '@menu/components/vertical-menu/Menu'
 
 // Component Imports
-import { Menu, MenuItem, MenuSection } from '@menu/vertical-menu'
+import { Menu, MenuItem, SubMenu, MenuSection } from '@menu/vertical-menu'
 
 // import { GenerateVerticalMenu } from '@components/GenerateMenu'
 
@@ -86,23 +86,76 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
           Dashboard
         </MenuItem>
         {role === 'property-manager' && (
-          <MenuSection label='Property Manager'>
-            <MenuItem href={`/${locale}/property-owners`} icon={<i className='tabler-home-hand' />}>
-              Property Owners
-            </MenuItem>
-            <MenuItem href={`/${locale}/properties/list`} icon={<i className='tabler-list' />}>
-              List of Properties
-            </MenuItem>
-            <MenuItem href={`/${locale}/add-property`} icon={<i className='tabler-home-plus' />}>
-              Add Property
-            </MenuItem>
-            <MenuItem href={`/${locale}/inventory/list`} icon={<i className='tabler-packages' />}>
-              Inventory
-            </MenuItem>
-            <MenuItem href={`/${locale}/contracts/list`} icon={<i className='tabler-file-text' />}>
-              Contracts
-            </MenuItem>
-          </MenuSection>
+          <>
+            <MenuSection label='Property Manager'>
+              <SubMenu label='Properties' icon={<i className='tabler-building' />}>
+                <MenuItem href={`/${locale}/properties/list`}>List of Properties</MenuItem>
+                <MenuItem href={`/${locale}/add-property`}>Add Property</MenuItem>
+              </SubMenu>
+              <MenuItem href={`/${locale}/property-owners`} icon={<i className='tabler-home-hand' />}>
+                Property Owners
+              </MenuItem>
+              <MenuItem href={`/${locale}/reviews`} icon={<i className='tabler-star' />}>
+                Reviews
+              </MenuItem>
+              <MenuItem href={`/${locale}/inventory/list`} icon={<i className='tabler-packages' />}>
+                Inventory
+              </MenuItem>
+            </MenuSection>
+            <MenuSection label='Tenancy Management'>
+              <MenuItem href={`/${locale}/reports`} icon={<i className='tabler-report-analytics' />}>
+                Reports
+              </MenuItem>
+              <MenuItem href={`/${locale}/rental-properties`} icon={<i className='tabler-home-dollar' />}>
+                Rental Properties
+              </MenuItem>
+              <MenuItem href={`/${locale}/tenants`} icon={<i className='tabler-users' />}>
+                Tenants
+              </MenuItem>
+              <MenuItem href={`/${locale}/contracts/list`} icon={<i className='tabler-file-text' />}>
+                My Contracts
+              </MenuItem>
+              <MenuItem href={`/${locale}/rental-calculator`} icon={<i className='tabler-calculator' />}>
+                Rental Calculator
+              </MenuItem>
+            </MenuSection>
+            <MenuSection label='Short Term Management'>
+              <MenuItem href={`/${locale}/guests`} icon={<i className='tabler-user-check' />}>
+                Guests
+              </MenuItem>
+              <MenuItem href={`/${locale}/bookings`} icon={<i className='tabler-calendar-event' />}>
+                Bookings
+              </MenuItem>
+            </MenuSection>
+            <MenuSection label='CRM'>
+              <MenuItem href={`/${locale}/enquiries`} icon={<i className='tabler-message-circle' />}>
+                Enquiries
+              </MenuItem>
+              <MenuItem href={`/${locale}/developers`} icon={<i className='tabler-crane' />}>
+                Developers
+              </MenuItem>
+              <MenuItem href={`/${locale}/projects`} icon={<i className='tabler-briefcase' />}>
+                Projects
+              </MenuItem>
+              <MenuItem href={`/${locale}/leads`} icon={<i className='tabler-target-arrow' />}>
+                Leads
+              </MenuItem>
+            </MenuSection>
+            <MenuSection label='Finances'>
+              <MenuItem href={`/${locale}/transactions`} icon={<i className='tabler-arrows-exchange' />}>
+                Transactions
+              </MenuItem>
+              <MenuItem href={`/${locale}/ledger-pm`} icon={<i className='tabler-book' />}>
+                Ledger PM
+              </MenuItem>
+              <MenuItem href={`/${locale}/ledger-po`} icon={<i className='tabler-book-2' />}>
+                Ledger PO
+              </MenuItem>
+              <MenuItem href={`/${locale}/financial-statement`} icon={<i className='tabler-file-dollar' />}>
+                Financial Statement
+              </MenuItem>
+            </MenuSection>
+          </>
         )}
       </Menu>
       {/* <Menu

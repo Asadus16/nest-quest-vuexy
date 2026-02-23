@@ -14,7 +14,22 @@ export const roleRoutes: Record<UserRole, string[]> = {
     '/contracts',
     '/add-contract',
     '/view-contract',
-    '/dashboards'
+    '/dashboards',
+    '/reviews',
+    '/reports',
+    '/rental-properties',
+    '/tenants',
+    '/rental-calculator',
+    '/guests',
+    '/bookings',
+    '/enquiries',
+    '/developers',
+    '/projects',
+    '/leads',
+    '/transactions',
+    '/ledger-pm',
+    '/ledger-po',
+    '/financial-statement'
   ],
   'property-owner': [
     '/dashboards'

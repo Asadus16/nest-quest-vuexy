@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 // Next Imports
 import Link from 'next/link'
@@ -21,6 +21,8 @@ import Tab from '@mui/material/Tab'
 import TabList from '@mui/lab/TabList'
 import TabContext from '@mui/lab/TabContext'
 import TabPanel from '@mui/lab/TabPanel'
+import Autocomplete from '@mui/material/Autocomplete'
+import Box from '@mui/material/Box'
 
 // Type Imports
 import type { Locale } from '@configs/i18n'
@@ -40,11 +42,54 @@ import { getLocalizedUrl } from '@/utils/i18n'
 // Styled Component Imports
 import AuthIllustrationWrapper from './AuthIllustrationWrapper'
 
+type CountryCode = { code: string }
+
+const defaultCountry: CountryCode = { code: '+971' }
+
 const Login = () => {
   // States
   const [isPasswordShown, setIsPasswordShown] = useState(false)
   const [loginMethod, setLoginMethod] = useState('email')
   const [phone, setPhone] = useState('')
+  const [countryCodes, setCountryCodes] = useState<CountryCode[]>([defaultCountry])
+  const [countryCode, setCountryCode] = useState<CountryCode>(defaultCountry)
+
+  // Fetch country codes from REST Countries API
+  useEffect(() => {
+    fetch('https://restcountries.com/v3.1/all?fields=idd')
+      .then(res => res.json())
+      .then((data: { idd: { root: string; suffixes?: string[] } }[]) => {
+        const codes: CountryCode[] = []
+
+        data.forEach(country => {
+          const root = country.idd.root
+
+          if (!root) return
+
+          const suffixes = country.idd.suffixes
+
+          if (suffixes && suffixes.length === 1) {
+            codes.push({ code: `${root}${suffixes[0]}` })
+          } else if (suffixes && suffixes.length > 1) {
+            codes.push({ code: root })
+          } else {
+            codes.push({ code: root })
+          }
+        })
+
+        const sorted = codes.sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }))
+
+        setCountryCodes(sorted)
+
+        // Keep UAE as default
+        const uae = sorted.find(c => c.code === '+971')
+
+        if (uae) setCountryCode(uae)
+      })
+      .catch(() => {
+        // Fallback already set via defaultCountry
+      })
+  }, [])
 
   // Hooks
   const router = useRouter()
@@ -116,15 +161,32 @@ const Login = () => {
                 />
               </TabPanel>
               <TabPanel value='phone' className='p-0'>
-                <CustomTextField
-                  autoFocus
-                  fullWidth
-                  label='Phone Number'
-                  placeholder='Enter your phone number'
-                  value={phone}
-                  onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
-                  slotProps={{ htmlInput: { inputMode: 'numeric' } }}
-                />
+                <div className='flex gap-2'>
+                  <Autocomplete
+                    value={countryCode}
+                    onChange={(_, newValue) => newValue && setCountryCode(newValue)}
+                    options={countryCodes}
+                    getOptionLabel={option => option.code}
+                    renderOption={(props, option) => (
+                      <Box component='li' {...props} key={option.code}>
+                        {option.code}
+                      </Box>
+                    )}
+                    disableClearable
+                    className='is-[100px] shrink-0'
+                    renderInput={params => <CustomTextField {...params} size='small' label='Code' />}
+                  />
+                  <CustomTextField
+                    autoFocus
+                    fullWidth
+                    size='small'
+                    label='Phone Number'
+                    placeholder='50 123 4567'
+                    value={phone}
+                    onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
+                    slotProps={{ htmlInput: { inputMode: 'numeric' } }}
+                  />
+                </div>
               </TabPanel>
             </TabContext>
             <CustomTextField
