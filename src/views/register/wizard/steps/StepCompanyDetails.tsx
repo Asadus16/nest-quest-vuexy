@@ -17,16 +17,21 @@ import DirectionalIcon from '@components/DirectionalIcon'
 // Data Imports
 import { uaeCities, getAreasByCity } from '@/data/uae-locations'
 
+// Context Imports
+import { useRegistration } from '@/contexts/registrationContext'
+
 // Type Imports
 import type { StepProps } from '../types'
 
 const StepCompanyDetails = ({ activeStep, handleNext, handlePrev, steps }: StepProps) => {
-  const [companyName, setCompanyName] = useState('')
-  const [companyEmail, setCompanyEmail] = useState('')
+  const { formData, updateForm, updateFormFile } = useRegistration()
+
+  const [companyName, setCompanyName] = useState(formData.company_name ?? '')
+  const [companyEmail, setCompanyEmail] = useState(formData.company_email ?? '')
   const [companyLogo, setCompanyLogo] = useState<File | null>(null)
-  const [companyAddress, setCompanyAddress] = useState('')
-  const [selectedCity, setSelectedCity] = useState('')
-  const [selectedArea, setSelectedArea] = useState('')
+  const [companyAddress, setCompanyAddress] = useState(formData.company_address ?? '')
+  const [selectedCity, setSelectedCity] = useState(formData.company_city ?? '')
+  const [selectedArea, setSelectedArea] = useState(formData.company_area ?? '')
 
   const areas = selectedCity ? getAreasByCity(selectedCity) : []
 
@@ -47,7 +52,11 @@ const StepCompanyDetails = ({ activeStep, handleNext, handlePrev, steps }: StepP
           label='Company Name'
           placeholder='Enter company name'
           value={companyName}
-          onChange={e => setCompanyName(e.target.value)}
+          onChange={e => {
+            const v = e.target.value
+            setCompanyName(v)
+            updateForm({ company_name: v })
+          }}
         />
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
@@ -57,11 +66,22 @@ const StepCompanyDetails = ({ activeStep, handleNext, handlePrev, steps }: StepP
           label='Company Email'
           placeholder='info@company.com'
           value={companyEmail}
-          onChange={e => setCompanyEmail(e.target.value)}
+          onChange={e => {
+            const v = e.target.value
+            setCompanyEmail(v)
+            updateForm({ company_email: v })
+          }}
         />
       </Grid>
       <Grid size={{ xs: 12 }}>
-        <FileUpload label='Upload Company Logo' accept='image/*' onChange={f => setCompanyLogo(f)} />
+        <FileUpload
+        label='Upload Company Logo'
+        accept='image/*'
+        onChange={f => {
+          setCompanyLogo(f)
+          updateFormFile('company_logo', f)
+        }}
+      />
       </Grid>
       <Grid size={{ xs: 12 }}>
         <CustomTextField
@@ -71,7 +91,11 @@ const StepCompanyDetails = ({ activeStep, handleNext, handlePrev, steps }: StepP
           label='Company Address'
           placeholder='Enter company address'
           value={companyAddress}
-          onChange={e => setCompanyAddress(e.target.value)}
+          onChange={e => {
+            const v = e.target.value
+            setCompanyAddress(v)
+            updateForm({ company_address: v })
+          }}
         />
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
@@ -81,8 +105,10 @@ const StepCompanyDetails = ({ activeStep, handleNext, handlePrev, steps }: StepP
           label='City'
           value={selectedCity}
           onChange={e => {
-            setSelectedCity(e.target.value)
+            const v = e.target.value
+            setSelectedCity(v)
             setSelectedArea('')
+            updateForm({ company_city: v, company_area: '' })
           }}
         >
           <MenuItem value=''>Select City</MenuItem>
@@ -100,7 +126,11 @@ const StepCompanyDetails = ({ activeStep, handleNext, handlePrev, steps }: StepP
           label='Area'
           disabled={!selectedCity}
           value={selectedArea}
-          onChange={e => setSelectedArea(e.target.value)}
+          onChange={e => {
+            const v = e.target.value
+            setSelectedArea(v)
+            updateForm({ company_area: v })
+          }}
         >
           <MenuItem value=''>Select Area</MenuItem>
           {areas.map(area => (

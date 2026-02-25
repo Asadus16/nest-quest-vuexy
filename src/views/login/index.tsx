@@ -7,6 +7,12 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 
+// Context Imports
+import { useAuth } from '@/contexts/authContext'
+
+// Service Imports
+import { ApiError } from '@/services/auth'
+
 // MUI Imports
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -47,10 +53,16 @@ type CountryCode = { code: string }
 const defaultCountry: CountryCode = { code: '+971' }
 
 const Login = () => {
+  const { login: authLogin } = useAuth()
+
   // States
   const [isPasswordShown, setIsPasswordShown] = useState(false)
   const [loginMethod, setLoginMethod] = useState('email')
+  const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [countryCodes, setCountryCodes] = useState<CountryCode[]>([defaultCountry])
   const [countryCode, setCountryCode] = useState<CountryCode>(defaultCountry)
 
@@ -101,16 +113,34 @@ const Login = () => {
 
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
 
-    // Save role to cookie
-    if (role) {
-      document.cookie = `user-role=${role}; path=/; max-age=${60 * 60 * 24 * 30}` // 30 days
+    if (loginMethod === 'phone') {
+      setError('Phone login is not yet supported. Please use email.')
+      return
     }
 
-    // Full page navigation so the server re-reads the role cookie
-    window.location.href = getLocalizedUrl('/dashboards/analytics', locale as Locale)
+    if (!email.trim() || !password) {
+      setError('Please enter email and password.')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      await authLogin(email.trim(), password)
+      if (role) {
+        document.cookie = `user-role=${role}; path=/; max-age=${60 * 60 * 24 * 30}`
+      }
+      window.location.href = getLocalizedUrl('/dashboards/analytics', locale as Locale)
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Login failed. Please try again.'
+      setError(typeof message === 'string' ? message : JSON.stringify(message))
+    } finally {
+      setLoading(false)
+    }
   }
 
   // Build register URL - if role is present, go to role-specific register
@@ -158,6 +188,8 @@ const Login = () => {
                   label='Email'
                   placeholder='Enter your email'
                   type='email'
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
                 />
               </TabPanel>
               <TabPanel value='phone' className='p-0'>
@@ -195,6 +227,8 @@ const Login = () => {
               placeholder='············'
               id='outlined-adornment-password'
               type={isPasswordShown ? 'text' : 'password'}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
               slotProps={{
                 input: {
                   endAdornment: (
@@ -207,6 +241,11 @@ const Login = () => {
                 }
               }}
             />
+            {error && (
+            <Typography color='error' variant='body2'>
+              {error}
+            </Typography>
+            )}
             <div className='flex justify-between items-center gap-x-3 gap-y-1 flex-wrap'>
               <FormControlLabel control={<Checkbox />} label='Remember me' />
               <Typography
@@ -218,8 +257,8 @@ const Login = () => {
                 Forgot password?
               </Typography>
             </div>
-            <Button fullWidth variant='contained' type='submit'>
-              Login
+            <Button fullWidth variant='contained' type='submit' disabled={loading}>
+              {loading ? 'Signing in...' : 'Login'}
             </Button>
             <div className='flex justify-center items-center flex-wrap gap-2'>
               <Typography>New on our platform?</Typography>

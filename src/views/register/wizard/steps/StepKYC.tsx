@@ -13,6 +13,9 @@ import CustomTextField from '@core/components/mui/TextField'
 import FileUpload from '@core/components/FileUpload'
 import DirectionalIcon from '@components/DirectionalIcon'
 
+// Context Imports
+import { useRegistration } from '@/contexts/registrationContext'
+
 // Type Imports
 import type { StepProps } from '../types'
 
@@ -21,13 +24,15 @@ type KYCProps = StepProps & {
 }
 
 const StepKYC = ({ activeStep, handleNext, handlePrev, steps, showTradeLicense = false }: KYCProps) => {
+  const { formData, updateForm, updateFormFile } = useRegistration()
+
   // Text fields
-  const [emiratesId, setEmiratesId] = useState('')
-  const [emiratesIdExpiry, setEmiratesIdExpiry] = useState('')
-  const [passportNo, setPassportNo] = useState('')
-  const [passportExpiry, setPassportExpiry] = useState('')
-  const [tradeLicenseNo, setTradeLicenseNo] = useState('')
-  const [tradeLicenseExpiry, setTradeLicenseExpiry] = useState('')
+  const [emiratesId, setEmiratesId] = useState(formData.emirates_id_number ?? '')
+  const [emiratesIdExpiry, setEmiratesIdExpiry] = useState(formData.emirates_id_expiry ?? '')
+  const [passportNo, setPassportNo] = useState(formData.passport_number ?? '')
+  const [passportExpiry, setPassportExpiry] = useState(formData.passport_expiry ?? '')
+  const [tradeLicenseNo, setTradeLicenseNo] = useState(formData.trade_license_number ?? '')
+  const [tradeLicenseExpiry, setTradeLicenseExpiry] = useState(formData.trade_license_expiry ?? '')
 
   // File uploads
   const [passportCopy, setPassportCopy] = useState<File | null>(null)
@@ -60,7 +65,11 @@ const StepKYC = ({ activeStep, handleNext, handlePrev, steps, showTradeLicense =
               label='Trade License No'
               placeholder='Enter trade license number'
               value={tradeLicenseNo}
-              onChange={e => setTradeLicenseNo(e.target.value.replace(/\D/g, ''))}
+              onChange={e => {
+            const v = e.target.value.replace(/\D/g, '')
+            setTradeLicenseNo(v)
+            updateForm({ trade_license_number: v })
+          }}
               slotProps={{ htmlInput: { inputMode: 'numeric' } }}
             />
           </Grid>
@@ -70,7 +79,11 @@ const StepKYC = ({ activeStep, handleNext, handlePrev, steps, showTradeLicense =
               type='date'
               label='Trade License Expiry'
               value={tradeLicenseExpiry}
-              onChange={e => setTradeLicenseExpiry(e.target.value)}
+              onChange={e => {
+            const v = e.target.value
+            setTradeLicenseExpiry(v)
+            updateForm({ trade_license_expiry: v })
+          }}
               slotProps={{ inputLabel: { shrink: true } }}
             />
           </Grid>
@@ -84,7 +97,11 @@ const StepKYC = ({ activeStep, handleNext, handlePrev, steps, showTradeLicense =
           label='Emirates ID No'
           placeholder='Enter Emirates ID number'
           value={emiratesId}
-          onChange={e => setEmiratesId(e.target.value.replace(/\D/g, ''))}
+          onChange={e => {
+            const v = e.target.value.replace(/\D/g, '')
+            setEmiratesId(v)
+            updateForm({ emirates_id_number: v })
+          }}
           slotProps={{ htmlInput: { inputMode: 'numeric' } }}
         />
       </Grid>
@@ -94,7 +111,11 @@ const StepKYC = ({ activeStep, handleNext, handlePrev, steps, showTradeLicense =
           type='date'
           label='Emirates ID Expiry'
           value={emiratesIdExpiry}
-          onChange={e => setEmiratesIdExpiry(e.target.value)}
+          onChange={e => {
+            const v = e.target.value
+            setEmiratesIdExpiry(v)
+            updateForm({ emirates_id_expiry: v })
+          }}
           slotProps={{ inputLabel: { shrink: true } }}
         />
       </Grid>
@@ -106,7 +127,11 @@ const StepKYC = ({ activeStep, handleNext, handlePrev, steps, showTradeLicense =
           label='Passport No'
           placeholder='Enter passport number'
           value={passportNo}
-          onChange={e => setPassportNo(e.target.value)}
+          onChange={e => {
+            const v = e.target.value
+            setPassportNo(v)
+            updateForm({ passport_number: v })
+          }}
         />
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
@@ -115,7 +140,11 @@ const StepKYC = ({ activeStep, handleNext, handlePrev, steps, showTradeLicense =
           type='date'
           label='Passport Expiry'
           value={passportExpiry}
-          onChange={e => setPassportExpiry(e.target.value)}
+          onChange={e => {
+            const v = e.target.value
+            setPassportExpiry(v)
+            updateForm({ passport_expiry: v })
+          }}
           slotProps={{ inputLabel: { shrink: true } }}
         />
       </Grid>
@@ -127,17 +156,45 @@ const StepKYC = ({ activeStep, handleNext, handlePrev, steps, showTradeLicense =
         </Typography>
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
-        <FileUpload label='Upload Passport Copy' accept='image/*,.pdf' onChange={f => setPassportCopy(f)} />
+        <FileUpload
+          label='Upload Passport Copy'
+          accept='image/*,.pdf'
+          onChange={f => {
+            setPassportCopy(f)
+            updateFormFile('passport_copy', f)
+          }}
+        />
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
-        <FileUpload label='Upload Emirates ID (Front)' accept='image/*,.pdf' onChange={f => setEmiratesIdFront(f)} />
+        <FileUpload
+          label='Upload Emirates ID (Front)'
+          accept='image/*,.pdf'
+          onChange={f => {
+            setEmiratesIdFront(f)
+            updateFormFile('emirates_id_front', f)
+          }}
+        />
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
-        <FileUpload label='Upload Emirates ID (Back)' accept='image/*,.pdf' onChange={f => setEmiratesIdBack(f)} />
+        <FileUpload
+          label='Upload Emirates ID (Back)'
+          accept='image/*,.pdf'
+          onChange={f => {
+            setEmiratesIdBack(f)
+            updateFormFile('emirates_id_back', f)
+          }}
+        />
       </Grid>
       {showTradeLicense && (
         <Grid size={{ xs: 12, md: 6 }}>
-          <FileUpload label='Upload Trade License' accept='image/*,.pdf' onChange={f => setTradeLicenseFile(f)} />
+          <FileUpload
+            label='Upload Trade License'
+            accept='image/*,.pdf'
+            onChange={f => {
+              setTradeLicenseFile(f)
+              updateFormFile('trade_license', f)
+            }}
+          />
         </Grid>
       )}
 
