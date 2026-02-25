@@ -17,17 +17,21 @@ import DirectionalIcon from '@components/DirectionalIcon'
 import useCountries from '@/hooks/useCountries'
 import type { Country } from '@/hooks/useCountries'
 
+// Context Imports
+import { useRegistration } from '@/contexts/registrationContext'
+
 // Type Imports
 import type { StepProps } from '../types'
 
 const StepPersonalDetails = ({ activeStep, handleNext, handlePrev, steps }: StepProps) => {
   const { countries, loading } = useCountries()
+  const { formData, updateForm } = useRegistration()
 
-  const [fullName, setFullName] = useState('')
-  const [dob, setDob] = useState('')
+  const [fullName, setFullName] = useState(formData.full_name ?? '')
+  const [dob, setDob] = useState(formData.dob ?? '')
   const [nationality, setNationality] = useState<Country | null>(null)
   const [country, setCountry] = useState<Country | null>(null)
-  const [address, setAddress] = useState('')
+  const [address, setAddress] = useState(formData.address ?? '')
 
   const isValid = fullName.trim() && dob && nationality && country && address.trim()
 
@@ -45,7 +49,11 @@ const StepPersonalDetails = ({ activeStep, handleNext, handlePrev, steps }: Step
           label='Full Name'
           placeholder='John Doe'
           value={fullName}
-          onChange={e => setFullName(e.target.value)}
+          onChange={e => {
+          const v = e.target.value
+          setFullName(v)
+          updateForm({ full_name: v })
+        }}
         />
       </Grid>
       <Grid size={{ xs: 12 }}>
@@ -54,7 +62,11 @@ const StepPersonalDetails = ({ activeStep, handleNext, handlePrev, steps }: Step
           type='date'
           label='Date of Birth'
           value={dob}
-          onChange={e => setDob(e.target.value)}
+          onChange={e => {
+          const v = e.target.value
+          setDob(v)
+          updateForm({ dob: v })
+        }}
           slotProps={{ inputLabel: { shrink: true } }}
         />
       </Grid>
@@ -64,7 +76,10 @@ const StepPersonalDetails = ({ activeStep, handleNext, handlePrev, steps }: Step
           loading={loading}
           options={countries}
           value={nationality}
-          onChange={(_, val) => setNationality(val)}
+          onChange={(_, val) => {
+          setNationality(val)
+          updateForm({ nationality: val?.label })
+        }}
           getOptionLabel={option => (typeof option === 'string' ? option : option.label)}
           renderInput={params => <CustomTextField {...params} label='Nationality' placeholder='Select nationality' />}
           isOptionEqualToValue={(option, value) => option.code === value.code}
@@ -92,7 +107,11 @@ const StepPersonalDetails = ({ activeStep, handleNext, handlePrev, steps }: Step
           label='Resident Address'
           placeholder='Enter your address'
           value={address}
-          onChange={e => setAddress(e.target.value)}
+          onChange={e => {
+          const v = e.target.value
+          setAddress(v)
+          updateForm({ address: v })
+        }}
         />
       </Grid>
       <Grid size={{ xs: 12 }}>

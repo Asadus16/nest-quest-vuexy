@@ -22,6 +22,9 @@ import CustomAvatar from '@core/components/mui/Avatar'
 // Styled Component Imports
 import StepperWrapper from '@core/styles/stepper'
 
+// Context Imports
+import { RegistrationProvider } from '@/contexts/registrationContext'
+
 // Type Imports
 import type { UserRole } from '@/types/userTypes'
 
@@ -67,6 +70,7 @@ const RegistrationWizard = ({ role }: Props) => {
   const extraProps = steps[activeStep].title === 'KYC' ? { showTradeLicense: role === 'property-manager' } : {}
 
   return (
+    <RegistrationProvider role={role}>
     <Card className='flex flex-col lg:flex-row lg:min-bs-[680px]'>
       <CardContent className='max-lg:border-be lg:border-ie lg:min-is-[300px]'>
         <StepperWrapper>
@@ -113,6 +117,7 @@ const RegistrationWizard = ({ role }: Props) => {
         />
       </CardContent>
     </Card>
+    </RegistrationProvider>
   )
 }
 

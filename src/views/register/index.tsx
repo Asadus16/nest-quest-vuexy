@@ -7,6 +7,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 
+// Context Imports
+import { useAuth } from '@/contexts/authContext'
+
+// Service Imports
+import { ApiError } from '@/services/auth'
+
 // MUI Imports
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -37,12 +43,49 @@ import { getLocalizedUrl } from '@/utils/i18n'
 import AuthIllustrationWrapper from '@views/login/AuthIllustrationWrapper'
 
 const Register = ({ role }: { role: string }) => {
-  const [isPasswordShown, setIsPasswordShown] = useState(false)
+  const { register: authRegister } = useAuth()
   const { lang: locale } = useParams()
+
+  const [fullName, setFullName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isPasswordShown, setIsPasswordShown] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [agreed, setAgreed] = useState(false)
 
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
 
   const roleName = roleNames[role as UserRole] || role
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    if (!fullName.trim() || !email.trim() || !password) {
+      setError('Please fill in all required fields.')
+      return
+    }
+    if (!agreed) {
+      setError('Please agree to the privacy policy and terms.')
+      return
+    }
+    setLoading(true)
+    try {
+      await authRegister({
+        email: email.trim(),
+        password,
+        password_confirmation: password,
+        role,
+        full_name: fullName.trim()
+      })
+      window.location.href = getLocalizedUrl('/dashboards/analytics', locale as Locale)
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Registration failed. Please try again.'
+      setError(typeof message === 'string' ? message : JSON.stringify(message))
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <AuthIllustrationWrapper>
@@ -55,14 +98,38 @@ const Register = ({ role }: { role: string }) => {
             <Typography variant='h4'>{`Sign up as ${roleName}`}</Typography>
             <Typography>{`Create your ${themeConfig.templateName} account to get started`}</Typography>
           </div>
-          <form noValidate autoComplete='off' onSubmit={e => e.preventDefault()} className='flex flex-col gap-6'>
-            <CustomTextField autoFocus fullWidth label='Full Name' placeholder='Enter your full name' />
-            <CustomTextField fullWidth label='Email' placeholder='Enter your email' type='email' />
+          <form noValidate autoComplete='off' onSubmit={handleSubmit} className='flex flex-col gap-6'>
+            {error && (
+              <Typography color='error' variant='body2'>
+                {error}
+              </Typography>
+            )}
+            <CustomTextField
+              autoFocus
+              fullWidth
+              label='Full Name'
+              placeholder='Enter your full name'
+              value={fullName}
+              onChange={e => setFullName(e.target.value)}
+              required
+            />
+            <CustomTextField
+              fullWidth
+              label='Email'
+              placeholder='Enter your email'
+              type='email'
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
             <CustomTextField
               fullWidth
               label='Password'
               placeholder='············'
               type={isPasswordShown ? 'text' : 'password'}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
               slotProps={{
                 input: {
                   endAdornment: (
@@ -76,7 +143,7 @@ const Register = ({ role }: { role: string }) => {
               }}
             />
             <FormControlLabel
-              control={<Checkbox />}
+              control={<Checkbox checked={agreed} onChange={e => setAgreed(e.target.checked)} />}
               label={
                 <span>
                   I agree to{' '}
@@ -86,8 +153,8 @@ const Register = ({ role }: { role: string }) => {
                 </span>
               }
             />
-            <Button fullWidth variant='contained' type='submit'>
-              Sign Up
+            <Button fullWidth variant='contained' type='submit' disabled={loading}>
+              {loading ? 'Creating account...' : 'Sign Up'}
             </Button>
             <div className='flex justify-center items-center flex-wrap gap-2'>
               <Typography>Already have an account?</Typography>

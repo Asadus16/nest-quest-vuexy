@@ -14,16 +14,21 @@ import InputAdornment from '@mui/material/InputAdornment'
 import CustomTextField from '@core/components/mui/TextField'
 import DirectionalIcon from '@components/DirectionalIcon'
 
+// Context Imports
+import { useRegistration } from '@/contexts/registrationContext'
+
 // Type Imports
 import type { StepProps } from '../types'
 
 const StepAccountDetails = ({ activeStep, handleNext, handlePrev, steps }: StepProps) => {
+  const { formData, updateForm } = useRegistration()
+
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
 
-  const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState(formData.email ?? '')
+  const [phone, setPhone] = useState(formData.phone ?? '')
+  const [password, setPassword] = useState(formData.password ?? '')
   const [confirmPassword, setConfirmPassword] = useState('')
 
   const passwordsMatch = password === confirmPassword
@@ -44,7 +49,11 @@ const StepAccountDetails = ({ activeStep, handleNext, handlePrev, steps }: StepP
           label='Email Address'
           placeholder='john@example.com'
           value={email}
-          onChange={e => setEmail(e.target.value)}
+          onChange={e => {
+            const v = e.target.value
+            setEmail(v)
+            updateForm({ email: v })
+          }}
         />
       </Grid>
       <Grid size={{ xs: 12 }}>
@@ -53,7 +62,11 @@ const StepAccountDetails = ({ activeStep, handleNext, handlePrev, steps }: StepP
           label='Phone Number'
           placeholder='Enter your phone number'
           value={phone}
-          onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}
+          onChange={e => {
+            const v = e.target.value.replace(/\D/g, '')
+            setPhone(v)
+            updateForm({ phone: v })
+          }}
           slotProps={{ htmlInput: { inputMode: 'numeric' } }}
         />
       </Grid>
@@ -64,7 +77,11 @@ const StepAccountDetails = ({ activeStep, handleNext, handlePrev, steps }: StepP
           placeholder='············'
           type={showPassword ? 'text' : 'password'}
           value={password}
-          onChange={e => setPassword(e.target.value)}
+          onChange={e => {
+            const v = e.target.value
+            setPassword(v)
+            updateForm({ password: v })
+          }}
           slotProps={{
             input: {
               endAdornment: (

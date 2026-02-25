@@ -24,6 +24,9 @@ import Button from '@mui/material/Button'
 // Type Imports
 import type { Locale } from '@configs/i18n'
 
+// Context Imports
+import { useAuth } from '@/contexts/authContext'
+
 // Hook Imports
 import { useSettings } from '@core/hooks/useSettings'
 
@@ -51,6 +54,7 @@ const UserDropdown = () => {
   const router = useRouter()
   const { settings } = useSettings()
   const { lang: locale } = useParams()
+  const { user, logout } = useAuth()
 
   const handleDropdownOpen = () => {
     !open ? setOpen(true) : setOpen(false)
@@ -68,10 +72,8 @@ const UserDropdown = () => {
     setOpen(false)
   }
 
-  const handleUserLogout = () => {
-    // Clear the role cookie
-    document.cookie = 'user-role=; path=/; max-age=0'
-
+  const handleUserLogout = async () => {
+    await logout()
     router.push(getLocalizedUrl('/select-role', locale as Locale))
   }
 
@@ -86,7 +88,7 @@ const UserDropdown = () => {
       >
         <Avatar
           ref={anchorRef}
-          alt='Property Manager'
+          alt={user?.email?.split('@')[0] || 'User'}
           src='/images/avatars/1.png'
           onClick={handleDropdownOpen}
           className='cursor-pointer bs-[38px] is-[38px]'
@@ -111,12 +113,12 @@ const UserDropdown = () => {
               <ClickAwayListener onClickAway={e => handleDropdownClose(e as MouseEvent | TouchEvent)}>
                 <MenuList>
                   <div className='flex items-center plb-2 pli-6 gap-2' tabIndex={-1}>
-                    <Avatar alt='Property Manager' src='/images/avatars/1.png' />
+                    <Avatar alt={user?.email?.split('@')[0] || 'User'} src='/images/avatars/1.png' />
                     <div className='flex items-start flex-col'>
                       <Typography className='font-medium' color='text.primary'>
-                        Property Manager
+                        {user?.email?.split('@')[0] || 'User'}
                       </Typography>
-                      <Typography variant='caption'>admin@nestquest.ae</Typography>
+                      <Typography variant='caption'>{user?.email || ''}</Typography>
                     </div>
                   </div>
                   <Divider className='mlb-1' />
