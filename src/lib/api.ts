@@ -43,8 +43,8 @@ export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): 
   const data = await response.json().catch(() => null)
 
   if (!response.ok) {
-    const message = data?.message || data?.errors ? JSON.stringify(data.errors) : response.statusText
-    throw new ApiError(message, response.status, data)
+    const message = data?.message || (data?.errors ? Object.values(data.errors).flat()[0] : response.statusText)
+    throw new ApiError(message as string, response.status, data)
   }
 
   return data as T
@@ -74,8 +74,8 @@ export async function apiFetchFormData<T>(endpoint: string, formData: FormData):
   const data = await response.json().catch(() => null)
 
   if (!response.ok) {
-    const message = data?.message || data?.errors ? JSON.stringify(data.errors) : response.statusText
-    throw new ApiError(message, response.status, data)
+    const message = data?.message || (data?.errors ? Object.values(data.errors).flat()[0] : response.statusText)
+    throw new ApiError(message as string, response.status, data)
   }
 
   return data as T

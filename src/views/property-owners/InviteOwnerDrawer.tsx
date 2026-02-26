@@ -7,13 +7,14 @@ import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
+import Alert from '@mui/material/Alert'
 
 // Third-party Imports
 import { useForm, Controller } from 'react-hook-form'
 import { MuiTelInput } from 'mui-tel-input'
 
-// Types Imports
-import type { PropertyOwnerType } from '@/types/apps/propertyOwnerTypes'
+// Service Imports
+import { sendInvite } from '@/services/ownerInvitations'
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
@@ -21,21 +22,18 @@ import CustomTextField from '@core/components/mui/TextField'
 type Props = {
   open: boolean
   handleClose: () => void
-  ownerData?: PropertyOwnerType[]
-  setData: (data: PropertyOwnerType[]) => void
+  onSuccess: () => void
 }
 
 type FormValidateType = {
   email: string
 }
 
-const InviteOwnerDrawer = (props: Props) => {
-  // Props
-  const { open, handleClose, ownerData, setData } = props
-
+const InviteOwnerDrawer = ({ open, handleClose, onSuccess }: Props) => {
   // States
   const [phone, setPhone] = useState('')
-  const [phoneError, setPhoneError] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [apiError, setApiError] = useState('')
 
   // Hooks
   const {
@@ -49,36 +47,25 @@ const InviteOwnerDrawer = (props: Props) => {
     }
   })
 
-  const onSubmit = (data: FormValidateType) => {
-    if (!phone || phone.length < 5) {
-      setPhoneError(true)
+  const onSubmit = async (data: FormValidateType) => {
+    setApiError('')
+    setLoading(true)
 
-      return
+    try {
+      await sendInvite(data.email, phone || undefined)
+      handleReset()
+      onSuccess()
+    } catch (err: any) {
+      setApiError(err.message || 'Failed to send invitation.')
+    } finally {
+      setLoading(false)
     }
-
-    const newOwner: PropertyOwnerType = {
-      id: (ownerData?.length && ownerData?.length + 1) || 1,
-      avatar: `/images/avatars/${Math.floor(Math.random() * 8) + 1}.png`,
-      fullName: data.email.split('@')[0],
-      email: data.email,
-      contact: phone,
-      city: '',
-      properties: 0,
-      status: 'pending',
-      invitedDate: new Date().toISOString().split('T')[0]
-    }
-
-    setData([...(ownerData ?? []), newOwner])
-    handleClose()
-    setPhone('')
-    setPhoneError(false)
-    resetForm({ email: '' })
   }
 
   const handleReset = () => {
     handleClose()
     setPhone('')
-    setPhoneError(false)
+    setApiError('')
     resetForm({ email: '' })
   }
 
@@ -99,7 +86,12 @@ const InviteOwnerDrawer = (props: Props) => {
       </div>
       <Divider />
       <div>
-        <form onSubmit={handleSubmit(data => onSubmit(data))} className='flex flex-col gap-6 p-6'>
+        <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-6 p-6'>
+          {apiError && (
+            <Alert severity='error' onClose={() => setApiError('')}>
+              {apiError}
+            </Alert>
+          )}
           <Controller
             name='email'
             control={control}
@@ -117,21 +109,16 @@ const InviteOwnerDrawer = (props: Props) => {
           />
           <MuiTelInput
             value={phone}
-            onChange={value => {
-              setPhone(value)
-              setPhoneError(false)
-            }}
+            onChange={setPhone}
             defaultCountry='AE'
-            label='Phone Number'
+            label='Phone Number (Optional)'
             fullWidth
-            error={phoneError}
-            helperText={phoneError ? 'This field is required.' : ''}
           />
           <div className='flex items-center gap-4'>
-            <Button variant='contained' type='submit'>
-              Send Invite
+            <Button variant='contained' type='submit' disabled={loading}>
+              {loading ? 'Sending...' : 'Send Invite'}
             </Button>
-            <Button variant='tonal' color='error' type='reset' onClick={() => handleReset()}>
+            <Button variant='tonal' color='error' type='reset' onClick={handleReset}>
               Cancel
             </Button>
           </div>

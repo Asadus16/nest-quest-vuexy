@@ -85,6 +85,13 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
         <MenuItem href={`/${locale}/dashboards/analytics`} icon={<i className='tabler-smart-home' />}>
           Dashboard
         </MenuItem>
+        {role === 'property-owner' && (
+          <MenuSection label='Property Owner'>
+            <MenuItem href={`/${locale}/manager-requests`} icon={<i className='tabler-mail' />}>
+              Manager Requests
+            </MenuItem>
+          </MenuSection>
+        )}
         {role === 'property-manager' && (
           <>
             <MenuSection label='Property Manager'>

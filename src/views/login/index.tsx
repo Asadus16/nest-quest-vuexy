@@ -241,11 +241,9 @@ const Login = () => {
                 }
               }}
             />
-            {error && (
-            <Typography color='error' variant='body2'>
-              {error}
+            <Typography color='error.main' variant='body2' className='min-h-[20px]'>
+              {error || '\u00A0'}
             </Typography>
-            )}
             <div className='flex justify-between items-center gap-x-3 gap-y-1 flex-wrap'>
               <FormControlLabel control={<Checkbox />} label='Remember me' />
               <Typography

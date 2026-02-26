@@ -12,32 +12,25 @@ import TabPanel from '@mui/lab/TabPanel'
 import CircularProgress from '@mui/material/CircularProgress'
 
 // Type Imports
-import type { OwnerInvitationType, InvitationStatsType } from '@/types/apps/propertyOwnerTypes'
+import type { OwnerInvitationType } from '@/types/apps/propertyOwnerTypes'
 
 // Service Imports
-import { getInvitations, getInvitationStats } from '@/services/ownerInvitations'
+import { getOwnerInvitations } from '@/services/ownerManagerRequests'
 
 // Component Imports
-import PropertyOwnerTable from './PropertyOwnerTable'
-import PropertyOwnerCards from './PropertyOwnerCards'
+import ManagerRequestTable from './ManagerRequestTable'
+import ManagerRequestCards from './ManagerRequestCards'
 
-const PropertyOwnerList = () => {
-  const [activeTab, setActiveTab] = useState('linked')
+const ManagerRequestList = () => {
+  const [activeTab, setActiveTab] = useState('invites')
   const [loading, setLoading] = useState(true)
   const [invitations, setInvitations] = useState<OwnerInvitationType[]>([])
-  const [stats, setStats] = useState<InvitationStatsType>({
-    total_linked: 0,
-    invites_sent: 0,
-    properties_managed: 0,
-    linked_this_month: 0
-  })
 
   const fetchData = useCallback(async () => {
     try {
-      const [invitationsData, statsData] = await Promise.all([getInvitations(), getInvitationStats()])
+      const data = await getOwnerInvitations()
 
-      setInvitations(invitationsData)
-      setStats(statsData)
+      setInvitations(data)
     } catch {
       // API errors handled silently — cards show zeros, table shows empty
     } finally {
@@ -64,29 +57,29 @@ const PropertyOwnerList = () => {
   return (
     <Grid container spacing={6}>
       <Grid size={{ xs: 12 }}>
-        <PropertyOwnerCards stats={stats} />
+        <ManagerRequestCards invitations={invitations} />
       </Grid>
       <Grid size={{ xs: 12 }}>
         <TabContext value={activeTab}>
           <TabList onChange={handleTabChange} className='mbe-4'>
+            <Tab
+              label='Invites'
+              value='invites'
+              icon={<i className='tabler-mail' />}
+              iconPosition='start'
+            />
             <Tab
               label='Linked'
               value='linked'
               icon={<i className='tabler-link' />}
               iconPosition='start'
             />
-            <Tab
-              label='All Invites'
-              value='all-invites'
-              icon={<i className='tabler-mail' />}
-              iconPosition='start'
-            />
           </TabList>
-          <TabPanel value='linked' className='p-0'>
-            <PropertyOwnerTable invitations={invitations} activeTab='linked' onRefresh={fetchData} />
+          <TabPanel value='invites' className='p-0'>
+            <ManagerRequestTable invitations={invitations} activeTab='invites' onRefresh={fetchData} />
           </TabPanel>
-          <TabPanel value='all-invites' className='p-0'>
-            <PropertyOwnerTable invitations={invitations} activeTab='all-invites' onRefresh={fetchData} />
+          <TabPanel value='linked' className='p-0'>
+            <ManagerRequestTable invitations={invitations} activeTab='linked' onRefresh={fetchData} />
           </TabPanel>
         </TabContext>
       </Grid>
@@ -94,4 +87,4 @@ const PropertyOwnerList = () => {
   )
 }
 
-export default PropertyOwnerList
+export default ManagerRequestList

@@ -8,8 +8,6 @@ import { useParams, useRouter } from 'next/navigation'
 
 // MUI Imports
 import Card from '@mui/material/Card'
-import CardHeader from '@mui/material/CardHeader'
-import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Chip from '@mui/material/Chip'
 import Checkbox from '@mui/material/Checkbox'
@@ -17,6 +15,7 @@ import IconButton from '@mui/material/IconButton'
 import TablePagination from '@mui/material/TablePagination'
 import type { TextFieldProps } from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
+import Tooltip from '@mui/material/Tooltip'
 
 // Third-party Imports
 import classnames from 'classnames'
@@ -40,7 +39,6 @@ import type { RankingInfo } from '@tanstack/match-sorter-utils'
 import type { OwnerInvitationType } from '@/types/apps/propertyOwnerTypes'
 
 // Component Imports
-import InviteOwnerDrawer from './InviteOwnerDrawer'
 import TablePaginationComponent from '@components/TablePaginationComponent'
 import CustomTextField from '@core/components/mui/TextField'
 import CustomAvatar from '@core/components/mui/Avatar'
@@ -48,6 +46,9 @@ import CustomAvatar from '@core/components/mui/Avatar'
 // Util Imports
 import { getInitials } from '@/utils/getInitials'
 import { invitationStatusColors, invitationStatusLabels } from '@/utils/invitationStatusMap'
+
+// Service Imports
+import { respondToInvitation } from '@/services/ownerManagerRequests'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
@@ -102,7 +103,7 @@ const DebouncedInput = ({
 // Column Definitions
 const columnHelper = createColumnHelper<OwnerInvitationType>()
 
-const PropertyOwnerTable = ({
+const ManagerRequestTable = ({
   invitations,
   activeTab,
   onRefresh
@@ -113,28 +114,39 @@ const PropertyOwnerTable = ({
 }) => {
   // Hooks
   const router = useRouter()
-  const { lang: locale } = useParams()
+  const params = useParams()
+  const locale = params.lang as string
 
   // States
-  const [addOwnerOpen, setAddOwnerOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
   const [globalFilter, setGlobalFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
+  const [respondingId, setRespondingId] = useState<number | null>(null)
 
-  // Filter by tab and status
+  const handleRespond = async (invitationId: number, status: 'ACCEPTED' | 'REJECTED') => {
+    setRespondingId(invitationId)
+
+    try {
+      await respondToInvitation(invitationId, status)
+      onRefresh()
+    } catch {
+      // Error handled silently
+    } finally {
+      setRespondingId(null)
+    }
+  }
+
+  // Filter by tab
   const filteredData = useMemo(() => {
-    let data = invitations
-
     if (activeTab === 'linked') {
-      data = data.filter(inv => inv.status === 'ACCEPTED')
+      return invitations.filter(inv => inv.status === 'ACCEPTED')
     }
 
-    if (statusFilter) {
-      data = data.filter(inv => inv.status === statusFilter)
+    if (activeTab === 'invites') {
+      return invitations.filter(inv => inv.status === 'PENDING')
     }
 
-    return data
-  }, [invitations, activeTab, statusFilter])
+    return invitations
+  }, [invitations, activeTab])
 
   const columns = useMemo<ColumnDef<OwnerInvitationType, any>[]>(
     () => [
@@ -161,9 +173,10 @@ const PropertyOwnerTable = ({
         )
       },
       columnHelper.accessor('email', {
-        header: 'Owner',
+        header: 'Manager',
         cell: ({ row }) => {
-          const name = row.original.owner?.full_name || row.original.email.split('@')[0]
+          const name = row.original.property_manager?.full_name || row.original.email.split('@')[0]
+          const email = row.original.property_manager?.user?.email || row.original.email
 
           return (
             <div className='flex items-center gap-4'>
@@ -172,15 +185,11 @@ const PropertyOwnerTable = ({
                 <Typography color='text.primary' className='font-medium'>
                   {name}
                 </Typography>
-                <Typography variant='body2'>{row.original.email}</Typography>
+                <Typography variant='body2'>{email}</Typography>
               </div>
             </div>
           )
         }
-      }),
-      columnHelper.accessor('phone', {
-        header: 'Phone',
-        cell: ({ row }) => <Typography>{row.original.phone || '-'}</Typography>
       }),
       columnHelper.accessor('status', {
         header: 'Status',
@@ -195,7 +204,7 @@ const PropertyOwnerTable = ({
         )
       }),
       columnHelper.accessor('created_at', {
-        header: 'Invited Date',
+        header: 'Received',
         cell: ({ row }) => (
           <Typography color='text.primary'>
             {row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : '-'}
@@ -213,18 +222,46 @@ const PropertyOwnerTable = ({
       {
         id: 'action',
         header: 'Action',
-        cell: ({ row }) => (
-          <div className='flex items-center'>
-            <IconButton onClick={() => router.push(`/${locale}/view-owner/${row.original.id}`)}>
-              <i className='tabler-eye text-textSecondary' />
-            </IconButton>
-          </div>
-        ),
+        cell: ({ row }) => {
+          const isResponding = respondingId === row.original.id
+
+          return (
+            <div className='flex items-center gap-1'>
+              <Tooltip title='View Details'>
+                <IconButton onClick={() => router.push(`/${locale}/view-manager/${row.original.id}`)}>
+                  <i className='tabler-eye text-textSecondary' />
+                </IconButton>
+              </Tooltip>
+              {row.original.status === 'PENDING' && (
+                <>
+                  <Tooltip title='Accept'>
+                    <IconButton
+                      color='success'
+                      disabled={isResponding}
+                      onClick={() => handleRespond(row.original.id, 'ACCEPTED')}
+                    >
+                      <i className='tabler-check text-textSecondary' />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title='Reject'>
+                    <IconButton
+                      color='error'
+                      disabled={isResponding}
+                      onClick={() => handleRespond(row.original.id, 'REJECTED')}
+                    >
+                      <i className='tabler-x text-textSecondary' />
+                    </IconButton>
+                  </Tooltip>
+                </>
+              )}
+            </div>
+          )
+        },
         enableSorting: false
       }
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [router, locale]
+    [respondingId, locale]
   )
 
   const table = useReactTable({
@@ -256,130 +293,89 @@ const PropertyOwnerTable = ({
   })
 
   return (
-    <>
-      <Card>
-        {activeTab === 'all-invites' && (
-          <>
-            <CardHeader title='Filters' className='pbe-4' />
-            <div className='p-6 pt-0'>
-              <CustomTextField
-                select
-                fullWidth
-                id='select-status'
-                value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value)}
-                slotProps={{
-                  select: { displayEmpty: true }
-                }}
-                className='max-w-[250px]'
-              >
-                <MenuItem value=''>All Statuses</MenuItem>
-                <MenuItem value='PENDING'>Pending</MenuItem>
-                <MenuItem value='ACCEPTED'>Linked</MenuItem>
-                <MenuItem value='REJECTED'>Rejected</MenuItem>
-                <MenuItem value='EXPIRED'>Expired</MenuItem>
-              </CustomTextField>
-            </div>
-          </>
-        )}
-        <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
-          <CustomTextField
-            select
-            value={table.getState().pagination.pageSize}
-            onChange={e => table.setPageSize(Number(e.target.value))}
-            className='max-sm:is-full sm:is-[70px]'
-          >
-            <MenuItem value='10'>10</MenuItem>
-            <MenuItem value='25'>25</MenuItem>
-            <MenuItem value='50'>50</MenuItem>
-          </CustomTextField>
-          <div className='flex flex-col sm:flex-row max-sm:is-full items-start sm:items-center gap-4'>
-            <DebouncedInput
-              value={globalFilter ?? ''}
-              onChange={value => setGlobalFilter(String(value))}
-              placeholder='Search Owner'
-              className='max-sm:is-full'
-            />
-            <Button
-              variant='contained'
-              startIcon={<i className='tabler-plus' />}
-              onClick={() => setAddOwnerOpen(true)}
-              className='max-sm:is-full'
-            >
-              Invite Owner
-            </Button>
-          </div>
-        </div>
-        <div className='overflow-x-auto'>
-          <table className={tableStyles.table}>
-            <thead>
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <th key={header.id}>
-                      {header.isPlaceholder ? null : (
-                        <div
-                          className={classnames({
-                            'flex items-center': header.column.getIsSorted(),
-                            'cursor-pointer select-none': header.column.getCanSort()
-                          })}
-                          onClick={header.column.getToggleSortingHandler()}
-                        >
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          {{
-                            asc: <i className='tabler-chevron-up text-xl' />,
-                            desc: <i className='tabler-chevron-down text-xl' />
-                          }[header.column.getIsSorted() as 'asc' | 'desc'] ?? null}
-                        </div>
-                      )}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            {table.getFilteredRowModel().rows.length === 0 ? (
-              <tbody>
-                <tr>
-                  <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                    No data available
-                  </td>
-                </tr>
-              </tbody>
-            ) : (
-              <tbody>
-                {table
-                  .getRowModel()
-                  .rows.slice(0, table.getState().pagination.pageSize)
-                  .map(row => {
-                    return (
-                      <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
-                        {row.getVisibleCells().map(cell => (
-                          <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                        ))}
-                      </tr>
-                    )
-                  })}
-              </tbody>
-            )}
-          </table>
-        </div>
-        <TablePagination
-          component={() => <TablePaginationComponent table={table} />}
-          count={table.getFilteredRowModel().rows.length}
-          rowsPerPage={table.getState().pagination.pageSize}
-          page={table.getState().pagination.pageIndex}
-          onPageChange={(_, page) => {
-            table.setPageIndex(page)
-          }}
+    <Card>
+      <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
+        <CustomTextField
+          select
+          value={table.getState().pagination.pageSize}
+          onChange={e => table.setPageSize(Number(e.target.value))}
+          className='max-sm:is-full sm:is-[70px]'
+        >
+          <MenuItem value='10'>10</MenuItem>
+          <MenuItem value='25'>25</MenuItem>
+          <MenuItem value='50'>50</MenuItem>
+        </CustomTextField>
+        <DebouncedInput
+          value={globalFilter ?? ''}
+          onChange={value => setGlobalFilter(String(value))}
+          placeholder='Search Manager'
+          className='max-sm:is-full'
         />
-      </Card>
-      <InviteOwnerDrawer
-        open={addOwnerOpen}
-        handleClose={() => setAddOwnerOpen(false)}
-        onSuccess={onRefresh}
+      </div>
+      <div className='overflow-x-auto'>
+        <table className={tableStyles.table}>
+          <thead>
+            {table.getHeaderGroups().map(headerGroup => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map(header => (
+                  <th key={header.id}>
+                    {header.isPlaceholder ? null : (
+                      <div
+                        className={classnames({
+                          'flex items-center': header.column.getIsSorted(),
+                          'cursor-pointer select-none': header.column.getCanSort()
+                        })}
+                        onClick={header.column.getToggleSortingHandler()}
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {{
+                          asc: <i className='tabler-chevron-up text-xl' />,
+                          desc: <i className='tabler-chevron-down text-xl' />
+                        }[header.column.getIsSorted() as 'asc' | 'desc'] ?? null}
+                      </div>
+                    )}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          {table.getFilteredRowModel().rows.length === 0 ? (
+            <tbody>
+              <tr>
+                <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                  No data available
+                </td>
+              </tr>
+            </tbody>
+          ) : (
+            <tbody>
+              {table
+                .getRowModel()
+                .rows.slice(0, table.getState().pagination.pageSize)
+                .map(row => {
+                  return (
+                    <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
+                      {row.getVisibleCells().map(cell => (
+                        <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                      ))}
+                    </tr>
+                  )
+                })}
+            </tbody>
+          )}
+        </table>
+      </div>
+      <TablePagination
+        component={() => <TablePaginationComponent table={table} />}
+        count={table.getFilteredRowModel().rows.length}
+        rowsPerPage={table.getState().pagination.pageSize}
+        page={table.getState().pagination.pageIndex}
+        onPageChange={(_, page) => {
+          table.setPageIndex(page)
+        }}
       />
-    </>
+    </Card>
   )
 }
 
-export default PropertyOwnerTable
+export default ManagerRequestTable
