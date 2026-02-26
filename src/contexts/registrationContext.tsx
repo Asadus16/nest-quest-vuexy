@@ -28,6 +28,10 @@ export type RegistrationFormData = {
   passport_number?: string
   passport_expiry?: string
   passport_issued_country?: string
+  bank_name?: string
+  bank_branch?: string
+  account_number?: string
+  iban?: string
   [key: string]: string | undefined
 }
 
@@ -100,6 +104,12 @@ export function RegistrationProvider({
         payload.trade_license_number = d.trade_license_number
         payload.trade_license_expiry = d.trade_license_expiry
       }
+      if (role === 'property-owner') {
+        payload.bank_name = d.bank_name
+        payload.bank_branch = d.bank_branch
+        payload.account_number = d.account_number
+        payload.iban = d.iban
+      }
       return payload
     },
     [formData, role]
@@ -129,6 +139,10 @@ export function RegistrationProvider({
     if (d.company_area) fd.append('company_area', d.company_area)
     if (d.trade_license_number) fd.append('trade_license_number', d.trade_license_number)
     if (d.trade_license_expiry) fd.append('trade_license_expiry', d.trade_license_expiry)
+    if (d.bank_name) fd.append('bank_name', d.bank_name)
+    if (d.bank_branch) fd.append('bank_branch', d.bank_branch)
+    if (d.account_number) fd.append('account_number', d.account_number)
+    if (d.iban) fd.append('iban', d.iban)
     if (formFiles.company_logo) fd.append('company_logo', formFiles.company_logo)
     if (formFiles.passport_copy) fd.append('passport_copy', formFiles.passport_copy)
     if (formFiles.emirates_id_front) fd.append('emirates_id_front', formFiles.emirates_id_front)

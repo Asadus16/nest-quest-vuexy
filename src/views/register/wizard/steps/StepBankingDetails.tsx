@@ -1,8 +1,5 @@
 'use client'
 
-// React Imports
-import { useState } from 'react'
-
 // MUI Imports
 import Grid from '@mui/material/Grid'
 import Typography from '@mui/material/Typography'
@@ -12,14 +9,19 @@ import Button from '@mui/material/Button'
 import CustomTextField from '@core/components/mui/TextField'
 import DirectionalIcon from '@components/DirectionalIcon'
 
+// Context Imports
+import { useRegistration } from '@/contexts/registrationContext'
+
 // Type Imports
 import type { StepProps } from '../types'
 
 const StepBankingDetails = ({ activeStep, handleNext, handlePrev, steps }: StepProps) => {
-  const [bankName, setBankName] = useState('')
-  const [bankBranch, setBankBranch] = useState('')
-  const [accountNumber, setAccountNumber] = useState('')
-  const [iban, setIban] = useState('')
+  const { formData, updateForm } = useRegistration()
+
+  const bankName = formData.bank_name || ''
+  const bankBranch = formData.bank_branch || ''
+  const accountNumber = formData.account_number || ''
+  const iban = formData.iban || ''
 
   const isValid = bankName.trim() && bankBranch.trim() && accountNumber.trim() && iban.trim()
 
@@ -37,7 +39,7 @@ const StepBankingDetails = ({ activeStep, handleNext, handlePrev, steps }: StepP
           label='Bank Name'
           placeholder='Enter bank name'
           value={bankName}
-          onChange={e => setBankName(e.target.value)}
+          onChange={e => updateForm({ bank_name: e.target.value })}
         />
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
@@ -46,7 +48,7 @@ const StepBankingDetails = ({ activeStep, handleNext, handlePrev, steps }: StepP
           label='Bank Branch'
           placeholder='Enter branch name'
           value={bankBranch}
-          onChange={e => setBankBranch(e.target.value)}
+          onChange={e => updateForm({ bank_branch: e.target.value })}
         />
       </Grid>
       <Grid size={{ xs: 12 }}>
@@ -55,7 +57,7 @@ const StepBankingDetails = ({ activeStep, handleNext, handlePrev, steps }: StepP
           label='Bank Account Number'
           placeholder='Enter account number'
           value={accountNumber}
-          onChange={e => setAccountNumber(e.target.value.replace(/\D/g, ''))}
+          onChange={e => updateForm({ account_number: e.target.value.replace(/\D/g, '') })}
           slotProps={{ htmlInput: { inputMode: 'numeric' } }}
         />
       </Grid>
@@ -65,7 +67,7 @@ const StepBankingDetails = ({ activeStep, handleNext, handlePrev, steps }: StepP
           label='IBAN'
           placeholder='AE00 0000 0000 0000 0000 000'
           value={iban}
-          onChange={e => setIban(e.target.value)}
+          onChange={e => updateForm({ iban: e.target.value })}
         />
       </Grid>
       <Grid size={{ xs: 12 }}>

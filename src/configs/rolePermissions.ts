@@ -14,6 +14,7 @@ export const roleRoutes: Record<UserRole, string[]> = {
     '/contracts',
     '/add-contract',
     '/view-contract',
+    '/view-owner',
     '/dashboards',
     '/reviews',
     '/reports',
@@ -32,7 +33,9 @@ export const roleRoutes: Record<UserRole, string[]> = {
     '/financial-statement'
   ],
   'property-owner': [
-    '/dashboards'
+    '/dashboards',
+    '/manager-requests',
+    '/view-manager'
   ],
   tenant: [
     '/dashboards'

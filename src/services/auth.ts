@@ -55,6 +55,10 @@ export type RegisterPayload = {
   company_area?: string
   trade_license_number?: string
   trade_license_expiry?: string
+  bank_name?: string
+  bank_branch?: string
+  account_number?: string
+  iban?: string
 }
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
