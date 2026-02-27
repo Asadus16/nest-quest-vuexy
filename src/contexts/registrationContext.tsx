@@ -132,6 +132,7 @@ export function RegistrationProvider({
     if (d.passport_number) fd.append('passport_number', d.passport_number)
     if (d.passport_expiry) fd.append('passport_expiry', d.passport_expiry)
     if (d.passport_issued_country) fd.append('passport_issued_country', d.passport_issued_country)
+    if (d.address) fd.append('address', d.address)
     if (d.company_name) fd.append('company_name', d.company_name)
     if (d.company_email) fd.append('company_email', d.company_email)
     if (d.company_address) fd.append('company_address', d.company_address)

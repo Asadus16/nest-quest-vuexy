@@ -2,14 +2,14 @@
 import Grid from '@mui/material/Grid'
 
 // Type Imports
-import type { OwnerInvitationType } from '@/types/apps/propertyOwnerTypes'
+import type { ManagerInvitationType } from '../../index'
 
 // Component Imports
 import ManagerProfile from './ManagerProfile'
 import InvitationDetails from './InvitationDetails'
 
 type Props = {
-  invitation: OwnerInvitationType
+  invitation: ManagerInvitationType
   onRespond: (status: 'ACCEPTED' | 'REJECTED') => void
   responding: boolean
 }

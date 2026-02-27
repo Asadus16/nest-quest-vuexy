@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 // Next Imports
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 
 // MUI Imports
 import Card from '@mui/material/Card'
@@ -13,6 +13,7 @@ import CardHeader from '@mui/material/CardHeader'
 import Button from '@mui/material/Button'
 import Chip from '@mui/material/Chip'
 import Checkbox from '@mui/material/Checkbox'
+import CircularProgress from '@mui/material/CircularProgress'
 import Divider from '@mui/material/Divider'
 import IconButton from '@mui/material/IconButton'
 import MenuItem from '@mui/material/MenuItem'
@@ -49,6 +50,9 @@ import CustomAvatar from '@core/components/mui/Avatar'
 import CustomTextField from '@core/components/mui/TextField'
 import OptionMenu from '@core/components/option-menu'
 import TablePaginationComponent from '@components/TablePaginationComponent'
+
+// Service Imports
+import { getProperties } from '@/services/properties'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
@@ -134,23 +138,35 @@ const propertyTypeObj: PropertyTypeObj = {
 }
 
 const propertyStatusObj: PropertyStatusObj = {
-  Occupied: { title: 'Occupied', color: 'success' },
-  Vacant: { title: 'Vacant', color: 'warning' },
-  'Under Maintenance': { title: 'Maintenance', color: 'error' }
+  OCCUPIED: { title: 'Occupied', color: 'success' },
+  VACANT: { title: 'Vacant', color: 'warning' },
+  UNDER_MAINTENANCE: { title: 'Maintenance', color: 'error' }
 }
 
 // Column Definitions
 const columnHelper = createColumnHelper<PropertyWithActionsType>()
 
-const PropertyListTable = ({ propertyData }: { propertyData?: PropertyType[] }) => {
+const PropertyListTable = () => {
   // States
   const [rowSelection, setRowSelection] = useState({})
-  const [data, setData] = useState(...[propertyData])
-  const [filteredData, setFilteredData] = useState(data)
+  const [data, setData] = useState<PropertyType[]>([])
+  const [filteredData, setFilteredData] = useState<PropertyType[]>([])
   const [globalFilter, setGlobalFilter] = useState('')
+  const [loading, setLoading] = useState(true)
 
   // Hooks
   const { lang: locale } = useParams()
+  const router = useRouter()
+
+  useEffect(() => {
+    getProperties()
+      .then(properties => {
+        setData(properties)
+        setFilteredData(properties)
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
 
   const columns = useMemo<ColumnDef<PropertyWithActionsType, any>[]>(
     () => [
@@ -176,32 +192,40 @@ const PropertyListTable = ({ propertyData }: { propertyData?: PropertyType[] }) 
           />
         )
       },
-      columnHelper.accessor('propertyName', {
+      columnHelper.accessor('public_name', {
         header: 'Property',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
-            <img src={row.original.image} width={38} height={38} className='rounded bg-actionHover' />
+            {row.original.image ? (
+              <img src={row.original.image} width={38} height={38} className='rounded bg-actionHover object-cover' />
+            ) : (
+              <CustomAvatar skin='light' size={38}>
+                <i className='tabler-building text-lg' />
+              </CustomAvatar>
+            )}
             <div className='flex flex-col'>
               <Typography className='font-medium' color='text.primary'>
-                {row.original.propertyName}
+                {row.original.public_name}
               </Typography>
-              <Typography variant='body2'>{row.original.location}</Typography>
+              <Typography variant='body2'>
+                {[row.original.building_name, row.original.unit_number].filter(Boolean).join(' - ')}
+              </Typography>
             </div>
           </div>
         )
       }),
-      columnHelper.accessor('type', {
+      columnHelper.accessor('property_type', {
         header: 'Type',
         cell: ({ row }) => (
           <div className='flex items-center gap-4'>
             <CustomAvatar
               skin='light'
-              color={propertyTypeObj[row.original.type]?.color || 'primary'}
+              color={propertyTypeObj[row.original.property_type]?.color || 'primary'}
               size={30}
             >
-              <i className={classnames(propertyTypeObj[row.original.type]?.icon || 'tabler-home', 'text-lg')} />
+              <i className={classnames(propertyTypeObj[row.original.property_type]?.icon || 'tabler-home', 'text-lg')} />
             </CustomAvatar>
-            <Typography color='text.primary'>{row.original.type}</Typography>
+            <Typography color='text.primary'>{row.original.property_type}</Typography>
           </div>
         )
       }),
@@ -213,22 +237,23 @@ const PropertyListTable = ({ propertyData }: { propertyData?: PropertyType[] }) 
         header: 'Beds',
         cell: ({ row }) => <Typography>{row.original.bedrooms === 0 ? 'Studio' : row.original.bedrooms}</Typography>
       }),
-      columnHelper.accessor('area', {
+      columnHelper.accessor('area_sqft', {
         header: 'Area (Sq Ft)',
-        cell: ({ row }) => <Typography>{row.original.area.toLocaleString()}</Typography>
+        cell: ({ row }) => <Typography>{Number(row.original.area_sqft).toLocaleString()}</Typography>
       }),
-      columnHelper.accessor('rent', {
+      columnHelper.accessor('monthly_rent', {
         header: 'Rent',
         cell: ({ row }) => (
           <Typography className='font-medium' color='text.primary'>
-            {row.original.rent}
+            {row.original.monthly_rent ? `AED ${Number(row.original.monthly_rent).toLocaleString()}` : '-'}
           </Typography>
         )
       }),
-      columnHelper.accessor('ownerName', {
+      {
+        id: 'owner_name',
         header: 'Owner',
-        cell: ({ row }) => <Typography>{row.original.ownerName}</Typography>
-      }),
+        cell: ({ row }) => <Typography>{row.original.owner?.full_name || '-'}</Typography>
+      },
       columnHelper.accessor('status', {
         header: 'Status',
         cell: ({ row }) => (
@@ -251,7 +276,14 @@ const PropertyListTable = ({ propertyData }: { propertyData?: PropertyType[] }) 
               iconButtonProps={{ size: 'medium' }}
               iconClassName='text-textSecondary'
               options={[
-                { text: 'View', icon: 'tabler-eye' },
+                {
+                  text: 'View',
+                  icon: 'tabler-eye',
+                  menuItemProps: {
+                    onClick: () =>
+                      router.push(getLocalizedUrl(`/properties/view/${row.original.id}`, locale as Locale))
+                  }
+                },
                 {
                   text: 'Delete',
                   icon: 'tabler-trash',
@@ -343,59 +375,65 @@ const PropertyListTable = ({ propertyData }: { propertyData?: PropertyType[] }) 
           </div>
         </div>
         <div className='overflow-x-auto'>
-          <table className={tableStyles.table}>
-            <thead>
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <th key={header.id}>
-                      {header.isPlaceholder ? null : (
-                        <>
-                          <div
-                            className={classnames({
-                              'flex items-center': header.column.getIsSorted(),
-                              'cursor-pointer select-none': header.column.getCanSort()
-                            })}
-                            onClick={header.column.getToggleSortingHandler()}
-                          >
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                            {{
-                              asc: <i className='tabler-chevron-up text-xl' />,
-                              desc: <i className='tabler-chevron-down text-xl' />
-                            }[header.column.getIsSorted() as 'asc' | 'desc'] ?? null}
-                          </div>
-                        </>
-                      )}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            {table.getFilteredRowModel().rows.length === 0 ? (
-              <tbody>
-                <tr>
-                  <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
-                    No data available
-                  </td>
-                </tr>
-              </tbody>
-            ) : (
-              <tbody>
-                {table
-                  .getRowModel()
-                  .rows.slice(0, table.getState().pagination.pageSize)
-                  .map(row => {
-                    return (
-                      <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
-                        {row.getVisibleCells().map(cell => (
-                          <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                        ))}
-                      </tr>
-                    )
-                  })}
-              </tbody>
-            )}
-          </table>
+          {loading ? (
+            <div className='flex items-center justify-center p-8'>
+              <CircularProgress size={24} />
+            </div>
+          ) : (
+            <table className={tableStyles.table}>
+              <thead>
+                {table.getHeaderGroups().map(headerGroup => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map(header => (
+                      <th key={header.id}>
+                        {header.isPlaceholder ? null : (
+                          <>
+                            <div
+                              className={classnames({
+                                'flex items-center': header.column.getIsSorted(),
+                                'cursor-pointer select-none': header.column.getCanSort()
+                              })}
+                              onClick={header.column.getToggleSortingHandler()}
+                            >
+                              {flexRender(header.column.columnDef.header, header.getContext())}
+                              {{
+                                asc: <i className='tabler-chevron-up text-xl' />,
+                                desc: <i className='tabler-chevron-down text-xl' />
+                              }[header.column.getIsSorted() as 'asc' | 'desc'] ?? null}
+                            </div>
+                          </>
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              {table.getFilteredRowModel().rows.length === 0 ? (
+                <tbody>
+                  <tr>
+                    <td colSpan={table.getVisibleFlatColumns().length} className='text-center'>
+                      No data available
+                    </td>
+                  </tr>
+                </tbody>
+              ) : (
+                <tbody>
+                  {table
+                    .getRowModel()
+                    .rows.slice(0, table.getState().pagination.pageSize)
+                    .map(row => {
+                      return (
+                        <tr key={row.id} className={classnames({ selected: row.getIsSelected() })}>
+                          {row.getVisibleCells().map(cell => (
+                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                          ))}
+                        </tr>
+                      )
+                    })}
+                </tbody>
+              )}
+            </table>
+          )}
         </div>
         <TablePagination
           component={() => <TablePaginationComponent table={table} />}

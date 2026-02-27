@@ -6,7 +6,7 @@ import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 
 // Type Imports
-import type { OwnerInvitationType } from '@/types/apps/propertyOwnerTypes'
+import type { ManagerInvitationType } from '../../../index'
 
 // Component Imports
 import CustomAvatar from '@core/components/mui/Avatar'
@@ -30,7 +30,7 @@ const DetailRow = ({ icon, label, value }: { icon: string; label: string; value:
   </div>
 )
 
-const PersonalDetailsTab = ({ invitation }: { invitation: OwnerInvitationType }) => {
+const PersonalDetailsTab = ({ invitation }: { invitation: ManagerInvitationType }) => {
   const pm = invitation.property_manager
   const name = pm?.full_name || invitation.email.split('@')[0]
   const email = pm?.user?.email || invitation.email

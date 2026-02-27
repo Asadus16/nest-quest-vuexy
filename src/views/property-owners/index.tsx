@@ -76,7 +76,7 @@ const PropertyOwnerList = () => {
               iconPosition='start'
             />
             <Tab
-              label='All Invites'
+              label='Pending Invites'
               value='all-invites'
               icon={<i className='tabler-mail' />}
               iconPosition='start'

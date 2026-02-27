@@ -8,7 +8,6 @@ import { useParams, useRouter } from 'next/navigation'
 
 // MUI Imports
 import Card from '@mui/material/Card'
-import CardHeader from '@mui/material/CardHeader'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import Chip from '@mui/material/Chip'
@@ -119,7 +118,6 @@ const PropertyOwnerTable = ({
   const [addOwnerOpen, setAddOwnerOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
   const [globalFilter, setGlobalFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
 
   // Filter by tab and status
   const filteredData = useMemo(() => {
@@ -127,14 +125,12 @@ const PropertyOwnerTable = ({
 
     if (activeTab === 'linked') {
       data = data.filter(inv => inv.status === 'ACCEPTED')
-    }
-
-    if (statusFilter) {
-      data = data.filter(inv => inv.status === statusFilter)
+    } else if (activeTab === 'all-invites') {
+      data = data.filter(inv => inv.status === 'PENDING')
     }
 
     return data
-  }, [invitations, activeTab, statusFilter])
+  }, [invitations, activeTab])
 
   const columns = useMemo<ColumnDef<OwnerInvitationType, any>[]>(
     () => [
@@ -258,30 +254,6 @@ const PropertyOwnerTable = ({
   return (
     <>
       <Card>
-        {activeTab === 'all-invites' && (
-          <>
-            <CardHeader title='Filters' className='pbe-4' />
-            <div className='p-6 pt-0'>
-              <CustomTextField
-                select
-                fullWidth
-                id='select-status'
-                value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value)}
-                slotProps={{
-                  select: { displayEmpty: true }
-                }}
-                className='max-w-[250px]'
-              >
-                <MenuItem value=''>All Statuses</MenuItem>
-                <MenuItem value='PENDING'>Pending</MenuItem>
-                <MenuItem value='ACCEPTED'>Linked</MenuItem>
-                <MenuItem value='REJECTED'>Rejected</MenuItem>
-                <MenuItem value='EXPIRED'>Expired</MenuItem>
-              </CustomTextField>
-            </div>
-          </>
-        )}
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
             select

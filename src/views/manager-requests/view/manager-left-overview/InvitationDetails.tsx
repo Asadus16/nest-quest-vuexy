@@ -5,12 +5,12 @@ import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 
 // Type Imports
-import type { OwnerInvitationType } from '@/types/apps/propertyOwnerTypes'
+import type { ManagerInvitationType } from '../../index'
 
 // Component Imports
 import CustomAvatar from '@core/components/mui/Avatar'
 
-const InvitationDetails = ({ invitation }: { invitation: OwnerInvitationType }) => {
+const InvitationDetails = ({ invitation }: { invitation: ManagerInvitationType }) => {
   return (
     <Card>
       <CardContent className='flex flex-col gap-6'>

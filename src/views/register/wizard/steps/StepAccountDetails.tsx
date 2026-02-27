@@ -10,6 +10,9 @@ import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import InputAdornment from '@mui/material/InputAdornment'
 
+// Third-party Imports
+import { MuiTelInput } from 'mui-tel-input'
+
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
 import DirectionalIcon from '@components/DirectionalIcon'
@@ -27,12 +30,12 @@ const StepAccountDetails = ({ activeStep, handleNext, handlePrev, steps }: StepP
   const [showConfirm, setShowConfirm] = useState(false)
 
   const [email, setEmail] = useState(formData.email ?? '')
-  const [phone, setPhone] = useState(formData.phone ?? '')
+  const [phone, setPhone] = useState(formData.phone ?? '+971')
   const [password, setPassword] = useState(formData.password ?? '')
   const [confirmPassword, setConfirmPassword] = useState('')
 
   const passwordsMatch = password === confirmPassword
-  const isValid = email.trim() && phone.trim() && password && confirmPassword && passwordsMatch
+  const isValid = email.trim() && phone.replace(/\s/g, '').length > 4 && password && confirmPassword && passwordsMatch
 
   return (
     <Grid container spacing={6}>
@@ -57,17 +60,15 @@ const StepAccountDetails = ({ activeStep, handleNext, handlePrev, steps }: StepP
         />
       </Grid>
       <Grid size={{ xs: 12 }}>
-        <CustomTextField
+        <MuiTelInput
           fullWidth
+          defaultCountry='AE'
           label='Phone Number'
-          placeholder='Enter your phone number'
           value={phone}
-          onChange={e => {
-            const v = e.target.value.replace(/\D/g, '')
+          onChange={v => {
             setPhone(v)
             updateForm({ phone: v })
           }}
-          slotProps={{ htmlInput: { inputMode: 'numeric' } }}
         />
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>

@@ -3,6 +3,9 @@
 // React Imports
 import { useEffect, useState, useMemo } from 'react'
 
+// Next Imports
+import { useParams, useRouter } from 'next/navigation'
+
 // MUI Imports
 import Card from '@mui/material/Card'
 import CardHeader from '@mui/material/CardHeader'
@@ -37,10 +40,12 @@ import type { RankingInfo } from '@tanstack/match-sorter-utils'
 import type { ThemeColor } from '@core/types'
 import type { InventoryType } from '@/types/apps/inventoryTypes'
 
+// Service Imports
+import { deleteInventory } from '@/services/inventory'
+
 // Component Imports
 import TableFilters from './TableFilters'
 import AddInventoryDrawer from './AddInventoryDrawer'
-import OptionMenu from '@core/components/option-menu'
 import TablePaginationComponent from '@components/TablePaginationComponent'
 import CustomTextField from '@core/components/mui/TextField'
 import CustomAvatar from '@core/components/mui/Avatar'
@@ -117,15 +122,30 @@ const typeObj: TypeObj = {
 
 const columnHelper = createColumnHelper<InventoryTypeWithAction>()
 
-const InventoryListTable = ({ tableData }: { tableData?: InventoryType[] }) => {
+const InventoryListTable = ({
+  tableData,
+  onRefresh
+}: {
+  tableData: InventoryType[]
+  onRefresh: () => void
+}) => {
+  // Hooks
+  const router = useRouter()
+  const { lang: locale } = useParams()
+
   // States
   const [addDrawerOpen, setAddDrawerOpen] = useState(false)
   const [rowSelection, setRowSelection] = useState({})
-  const [data, setData] = useState(...[tableData])
-  const [filteredData, setFilteredData] = useState(data)
+  const [filteredData, setFilteredData] = useState(tableData)
   const [globalFilter, setGlobalFilter] = useState('')
 
-  const getWarrantyStatus = (warrantyEnd: string): { label: string; color: ThemeColor } => {
+  useEffect(() => {
+    setFilteredData(tableData)
+  }, [tableData])
+
+  const getWarrantyStatus = (warrantyEnd: string | null): { label: string; color: ThemeColor } => {
+    if (!warrantyEnd) return { label: 'N/A', color: 'secondary' }
+
     const today = new Date()
     const end = new Date(warrantyEnd)
 
@@ -137,6 +157,15 @@ const InventoryListTable = ({ tableData }: { tableData?: InventoryType[] }) => {
     if (diffDays <= 90) return { label: 'Expiring Soon', color: 'warning' }
 
     return { label: 'Active', color: 'success' }
+  }
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteInventory(id)
+      onRefresh()
+    } catch {
+      // Error handled silently
+    }
   }
 
   const columns = useMemo<ColumnDef<InventoryTypeWithAction, any>[]>(
@@ -179,7 +208,7 @@ const InventoryListTable = ({ tableData }: { tableData?: InventoryType[] }) => {
               <Typography color='text.primary' className='font-medium'>
                 {row.original.name}
               </Typography>
-              <Typography variant='body2'>{row.original.brand}</Typography>
+              <Typography variant='body2'>{row.original.brand || '-'}</Typography>
             </div>
           </div>
         )
@@ -192,64 +221,51 @@ const InventoryListTable = ({ tableData }: { tableData?: InventoryType[] }) => {
           </Typography>
         )
       }),
-      columnHelper.accessor('roomAssigned', {
+      columnHelper.accessor('room_assigned', {
         header: 'Room',
-        cell: ({ row }) => <Typography>{row.original.roomAssigned}</Typography>
+        cell: ({ row }) => <Typography>{row.original.room_assigned || '-'}</Typography>
       }),
-      columnHelper.accessor('propertyAssigned', {
+      columnHelper.accessor('property', {
         header: 'Property',
         cell: ({ row }) => (
           <Typography color='text.primary' className='font-medium'>
-            {row.original.propertyAssigned}
+            {row.original.property?.public_name || '-'}
           </Typography>
         )
       }),
-      columnHelper.accessor('currentWorth', {
+      columnHelper.accessor('current_worth', {
         header: 'Worth',
         cell: ({ row }) => (
-          <Typography>{`AED ${row.original.currentWorth.toLocaleString()}`}</Typography>
+          <Typography>
+            {row.original.current_worth ? `AED ${row.original.current_worth.toLocaleString()}` : '-'}
+          </Typography>
         )
       }),
-      columnHelper.accessor('warrantyEnd', {
+      columnHelper.accessor('warranty_end', {
         header: 'Warranty',
         cell: ({ row }) => {
-          const status = getWarrantyStatus(row.original.warrantyEnd)
+          const status = getWarrantyStatus(row.original.warranty_end)
 
-          return (
-            <Chip variant='tonal' label={status.label} size='small' color={status.color} />
-          )
+          return <Chip variant='tonal' label={status.label} size='small' color={status.color} />
         }
       }),
       columnHelper.accessor('action', {
         header: 'Action',
         cell: ({ row }) => (
           <div className='flex items-center'>
-            <IconButton onClick={() => setData(data?.filter(item => item.id !== row.original.id))}>
+            <IconButton onClick={() => router.push(`/${locale}/view-inventory/${row.original.id}`)}>
+              <i className='tabler-eye text-textSecondary' />
+            </IconButton>
+            <IconButton onClick={() => handleDelete(row.original.id)}>
               <i className='tabler-trash text-textSecondary' />
             </IconButton>
-            <OptionMenu
-              iconButtonProps={{ size: 'medium' }}
-              iconClassName='text-textSecondary'
-              options={[
-                {
-                  text: 'View',
-                  icon: 'tabler-eye',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                },
-                {
-                  text: 'Edit',
-                  icon: 'tabler-edit',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                }
-              ]}
-            />
           </div>
         ),
         enableSorting: false
       })
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, filteredData]
+    [router, locale]
   )
 
   const table = useReactTable({
@@ -284,7 +300,7 @@ const InventoryListTable = ({ tableData }: { tableData?: InventoryType[] }) => {
     <>
       <Card>
         <CardHeader title='Filters' className='pbe-4' />
-        <TableFilters setData={setFilteredData} tableData={data} />
+        <TableFilters setData={setFilteredData} tableData={tableData} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
             select
@@ -304,17 +320,9 @@ const InventoryListTable = ({ tableData }: { tableData?: InventoryType[] }) => {
               className='max-sm:is-full'
             />
             <Button
-              color='secondary'
-              variant='tonal'
-              startIcon={<i className='tabler-upload' />}
-              className='max-sm:is-full'
-            >
-              Export
-            </Button>
-            <Button
               variant='contained'
               startIcon={<i className='tabler-plus' />}
-              onClick={() => setAddDrawerOpen(!addDrawerOpen)}
+              onClick={() => setAddDrawerOpen(true)}
               className='max-sm:is-full'
             >
               Add Inventory
@@ -384,9 +392,8 @@ const InventoryListTable = ({ tableData }: { tableData?: InventoryType[] }) => {
       </Card>
       <AddInventoryDrawer
         open={addDrawerOpen}
-        handleClose={() => setAddDrawerOpen(!addDrawerOpen)}
-        inventoryData={data}
-        setData={setData}
+        handleClose={() => setAddDrawerOpen(false)}
+        onSuccess={onRefresh}
       />
     </>
   )

@@ -10,7 +10,7 @@ import { validRoles } from '@/types/userTypes'
 import type { UserRole } from '@/types/userTypes'
 
 // Roles that get the multi-step wizard signup flow
-const wizardRoles: UserRole[] = ['property-manager', 'property-owner', 'guest']
+const wizardRoles: UserRole[] = ['property-manager', 'property-owner', 'guest', 'tenant']
 
 type Props = {
   params: Promise<{ lang: string; role: string }>

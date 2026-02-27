@@ -4,12 +4,14 @@ export const invitationStatusColors: Record<string, ThemeColor> = {
   ACCEPTED: 'success',
   PENDING: 'warning',
   REJECTED: 'error',
-  EXPIRED: 'secondary'
+  EXPIRED: 'secondary',
+  CREATED: 'info'
 }
 
 export const invitationStatusLabels: Record<string, string> = {
   ACCEPTED: 'Linked',
   PENDING: 'Pending',
   REJECTED: 'Rejected',
-  EXPIRED: 'Expired'
+  EXPIRED: 'Expired',
+  CREATED: 'Created'
 }

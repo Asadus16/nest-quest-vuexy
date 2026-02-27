@@ -7,7 +7,7 @@ import Typography from '@mui/material/Typography'
 import Chip from '@mui/material/Chip'
 
 // Type Imports
-import type { OwnerInvitationType } from '@/types/apps/propertyOwnerTypes'
+import type { ManagerInvitationType } from '../../../index'
 
 // Component Imports
 import CustomAvatar from '@core/components/mui/Avatar'
@@ -47,11 +47,11 @@ const DocumentCard = ({
   </Card>
 )
 
-const LegalDocumentsTab = ({ invitation }: { invitation: OwnerInvitationType }) => {
+const LegalDocumentsTab = ({ invitation }: { invitation: ManagerInvitationType }) => {
   const pm = invitation.property_manager
 
-  const hasEmiratesId = pm?.emirates_id_number || pm?.emirates_id_copy
-  const hasPassport = pm?.passport_number || pm?.passport_copy
+  const hasEmiratesId = pm?.emirates_id_number || pm?.emirates_id_front_url
+  const hasPassport = pm?.passport_number || pm?.passport_copy_url
 
   return (
     <Grid container spacing={6}>
@@ -99,7 +99,7 @@ const LegalDocumentsTab = ({ invitation }: { invitation: OwnerInvitationType }) 
         />
       </Grid>
 
-      {pm?.emirates_id_copy && (
+      {pm?.emirates_id_front_url && (
         <Grid size={{ xs: 12, sm: 6 }}>
           <Card>
             <CardContent className='flex items-start gap-4'>
@@ -117,7 +117,7 @@ const LegalDocumentsTab = ({ invitation }: { invitation: OwnerInvitationType }) 
         </Grid>
       )}
 
-      {pm?.passport_copy && (
+      {pm?.passport_copy_url && (
         <Grid size={{ xs: 12, sm: 6 }}>
           <Card>
             <CardContent className='flex items-start gap-4'>

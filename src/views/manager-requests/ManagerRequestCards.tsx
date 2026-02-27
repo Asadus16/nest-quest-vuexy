@@ -3,7 +3,7 @@ import Grid from '@mui/material/Grid'
 
 // Type Imports
 import type { UserDataType } from '@components/card-statistics/HorizontalWithSubtitle'
-import type { OwnerInvitationType } from '@/types/apps/propertyOwnerTypes'
+import type { ManagerInvitationType } from './index'
 
 // Component Imports
 import HorizontalWithSubtitle from '@components/card-statistics/HorizontalWithSubtitle'
@@ -15,14 +15,14 @@ type ManagerRequestStats = {
   rejected: number
 }
 
-const computeStats = (invitations: OwnerInvitationType[]): ManagerRequestStats => ({
+const computeStats = (invitations: ManagerInvitationType[]): ManagerRequestStats => ({
   totalInvites: invitations.length,
   pending: invitations.filter(inv => inv.status === 'PENDING').length,
   linked: invitations.filter(inv => inv.status === 'ACCEPTED').length,
   rejected: invitations.filter(inv => inv.status === 'REJECTED').length
 })
 
-const ManagerRequestCards = ({ invitations }: { invitations: OwnerInvitationType[] }) => {
+const ManagerRequestCards = ({ invitations }: { invitations: ManagerInvitationType[] }) => {
   const stats = computeStats(invitations)
 
   const data: UserDataType[] = [

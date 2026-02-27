@@ -1,7 +1,4 @@
-// Type Imports
-import type { PropertyType } from '@/types/apps/propertyTypes'
-
-export const db: PropertyType[] = [
+export const db = [
   {
     id: 1,
     propertyName: 'Marina Heights 2BR',

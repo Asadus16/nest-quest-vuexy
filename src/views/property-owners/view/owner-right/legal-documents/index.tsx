@@ -50,8 +50,8 @@ const DocumentCard = ({
 const LegalDocumentsTab = ({ invitation }: { invitation: OwnerInvitationType }) => {
   const owner = invitation.owner
 
-  const hasEmiratesId = owner?.emirates_id_number || owner?.emirates_id_copy
-  const hasPassport = owner?.passport_number || owner?.passport_copy
+  const hasEmiratesId = owner?.emirates_id_number || owner?.emirates_id_front_url
+  const hasPassport = owner?.passport_number || owner?.passport_copy_url
 
   return (
     <Grid container spacing={6}>
@@ -100,7 +100,7 @@ const LegalDocumentsTab = ({ invitation }: { invitation: OwnerInvitationType }) 
         />
       </Grid>
 
-      {owner?.emirates_id_copy && (
+      {owner?.emirates_id_front_url && (
         <Grid size={{ xs: 12, sm: 6 }}>
           <Card>
             <CardContent className='flex items-start gap-4'>
@@ -118,7 +118,7 @@ const LegalDocumentsTab = ({ invitation }: { invitation: OwnerInvitationType }) 
         </Grid>
       )}
 
-      {owner?.passport_copy && (
+      {owner?.passport_copy_url && (
         <Grid size={{ xs: 12, sm: 6 }}>
           <Card>
             <CardContent className='flex items-start gap-4'>

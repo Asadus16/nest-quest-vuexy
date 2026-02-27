@@ -24,6 +24,13 @@ export type PolicyItem = {
   description: string
 }
 
+export type FinanceItem = {
+  label: string
+  amount: string
+  dueDate: string
+  status: 'Paid' | 'Unpaid'
+}
+
 export type PropertyFormData = {
   // Step 1: Property Details - Basic Information
   propertyType: string
@@ -85,6 +92,7 @@ export type PropertyFormData = {
 
   // Step 8: Agreement
   acquisitionMethod: string
+  // Rented-specific
   rentAmount: string
   rentFrequency: string
   paymentMethod: string
@@ -93,6 +101,14 @@ export type PropertyFormData = {
   tenancyAgreement: File | null
   ejariCertificate: File | null
   dcpmLetter: File | null
+  // Bought (Cash) / Financed shared
+  purchasePrice: string
+  purchaseDate: string
+  spa: File | null
+  paymentProof: File | null
+  // Financed-specific
+  financeItems: FinanceItem[]
+  // Common
   dewaNumber: string
   internetAccountNumber: string
   gasNumber: string
@@ -168,6 +184,11 @@ export const defaultFormData: PropertyFormData = {
   tenancyAgreement: null,
   ejariCertificate: null,
   dcpmLetter: null,
+  purchasePrice: '',
+  purchaseDate: '',
+  spa: null,
+  paymentProof: null,
+  financeItems: [],
   dewaNumber: '',
   internetAccountNumber: '',
   gasNumber: '',

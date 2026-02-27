@@ -7,7 +7,7 @@ import Divider from '@mui/material/Divider'
 import Button from '@mui/material/Button'
 
 // Type Imports
-import type { OwnerInvitationType } from '@/types/apps/propertyOwnerTypes'
+import type { ManagerInvitationType } from '../../index'
 
 // Component Imports
 import CustomAvatar from '@core/components/mui/Avatar'
@@ -17,7 +17,7 @@ import { getInitials } from '@/utils/getInitials'
 import { invitationStatusColors, invitationStatusLabels } from '@/utils/invitationStatusMap'
 
 type Props = {
-  invitation: OwnerInvitationType
+  invitation: ManagerInvitationType
   onRespond: (status: 'ACCEPTED' | 'REJECTED') => void
   responding: boolean
 }
