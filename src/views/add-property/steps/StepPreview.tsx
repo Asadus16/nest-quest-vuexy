@@ -1,5 +1,8 @@
 'use client'
 
+// React Imports
+import { useState, useEffect } from 'react'
+
 // MUI Imports
 import Grid from '@mui/material/Grid'
 import Typography from '@mui/material/Typography'
@@ -7,13 +10,26 @@ import Button from '@mui/material/Button'
 import Divider from '@mui/material/Divider'
 import Chip from '@mui/material/Chip'
 import Alert from '@mui/material/Alert'
+import CircularProgress from '@mui/material/CircularProgress'
 import { styled } from '@mui/material/styles'
 
 // Component Imports
 import DirectionalIcon from '@components/DirectionalIcon'
 
+// Service Imports
+import { createProperty, getLinkedOwners } from '@/services/properties'
+import { ApiError } from '@/lib/api'
+
 // Type Imports
 import type { StepProps } from '../types'
+import type { LinkedOwnerType } from '@/types/apps/propertyTypes'
+
+// Hook Imports
+import { useParams } from 'next/navigation'
+
+// Util Imports
+import { getLocalizedUrl } from '@/utils/i18n'
+import type { Locale } from '@configs/i18n'
 
 const PreviewImage = styled('div')({
   width: '100%',
@@ -51,19 +67,18 @@ const InfoRow = ({ label, value }: { label: string; value: string | number | boo
   )
 }
 
-// Static owners lookup (same as StepPropertyOwner)
-const propertyOwners: Record<string, string> = {
-  '1': 'Ahmed Al Maktoum — ahmed.maktoum@gmail.com',
-  '2': 'Fatima Al Nahyan — fatima.nahyan@outlook.com',
-  '3': 'Mohammed Al Qasimi — mohammed.qasimi@yahoo.com',
-  '4': 'Sara Al Falasi — sara.falasi@gmail.com',
-  '5': 'Khalid Al Habtoor — khalid.habtoor@hotmail.com',
-  '6': 'Noura Al Ketbi — noura.ketbi@gmail.com',
-  '7': 'Omar Al Mansoori — omar.mansoori@outlook.com',
-  '8': 'Layla Al Zaabi — layla.zaabi@gmail.com'
-}
-
 const StepPreview = ({ activeStep, handlePrev, formData }: StepProps) => {
+  const { lang: locale } = useParams()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [owners, setOwners] = useState<LinkedOwnerType[]>([])
+
+  useEffect(() => {
+    getLinkedOwners().then(setOwners).catch(() => {})
+  }, [])
+
+  const selectedOwner = owners.find(o => String(o.id) === formData.propertyOwner)
+
   const allAmenities = [
     ...formData.amenitiesGeneral,
     ...formData.amenitiesKitchen,
@@ -71,8 +86,114 @@ const StepPreview = ({ activeStep, handlePrev, formData }: StepProps) => {
     ...formData.amenitiesSafety
   ]
 
-  const handleSubmit = () => {
-    alert('Property listing submitted successfully!')
+  const handleSubmit = async () => {
+    setError(null)
+    setLoading(true)
+
+    try {
+      const fd = new FormData()
+
+      // Basic Information
+      fd.append('property_type', formData.propertyType)
+      if (formData.unitNumber) fd.append('unit_number', formData.unitNumber)
+      if (formData.floorNumber) fd.append('floor_number', formData.floorNumber)
+      fd.append('building_name', formData.buildingName)
+      fd.append('area_sqft', formData.areaSqFt)
+      fd.append('bedrooms', String(formData.bedrooms))
+      fd.append('bathrooms', String(formData.bathrooms))
+      fd.append('max_guests', String(formData.maxGuests))
+      fd.append('maid_room', formData.maidRoom ? '1' : '0')
+      fd.append('balcony', formData.balcony ? '1' : '0')
+      fd.append('smart_home', formData.smartHome ? '1' : '0')
+      if (formData.view) fd.append('view', formData.view)
+      if (formData.furnishedStatus) fd.append('furnished_status', formData.furnishedStatus)
+      if (formData.ceilingHeight) fd.append('ceiling_height', formData.ceilingHeight)
+
+      // Address
+      fd.append('address_line_1', formData.addressLine1)
+      if (formData.addressLine2) fd.append('address_line_2', formData.addressLine2)
+      fd.append('country', formData.country)
+      if (formData.state) fd.append('state', formData.state)
+      fd.append('city', formData.city)
+      if (formData.zipCode) fd.append('zip_code', formData.zipCode)
+      if (formData.area) fd.append('area', formData.area)
+      if (formData.latitude) fd.append('latitude', formData.latitude)
+      if (formData.longitude) fd.append('longitude', formData.longitude)
+
+      // Parking
+      if (formData.parkingSpaces) fd.append('parking_spaces', formData.parkingSpaces)
+      if (formData.parkingType) fd.append('parking_type', formData.parkingType)
+
+      // Description
+      fd.append('public_name', formData.publicName)
+      if (formData.shortDescription) fd.append('short_description', formData.shortDescription)
+      if (formData.longDescription) fd.append('long_description', formData.longDescription)
+      if (formData.internalNotes) fd.append('internal_notes', formData.internalNotes)
+
+      // Amenities (as JSON strings)
+      if (formData.amenitiesGeneral.length) fd.append('amenities_general', JSON.stringify(formData.amenitiesGeneral))
+      if (formData.amenitiesKitchen.length) fd.append('amenities_kitchen', JSON.stringify(formData.amenitiesKitchen))
+      if (formData.amenitiesEssentials.length) fd.append('amenities_essentials', JSON.stringify(formData.amenitiesEssentials))
+      if (formData.amenitiesSafety.length) fd.append('amenities_safety', JSON.stringify(formData.amenitiesSafety))
+
+      // Usage
+      if (formData.usageType) fd.append('usage_type', formData.usageType)
+      if (formData.monthlyRent) fd.append('monthly_rent', formData.monthlyRent)
+      fd.append('security_deposit_required', formData.securityDepositRequired ? '1' : '0')
+      if (formData.securityDepositAmount) fd.append('security_deposit_amount', formData.securityDepositAmount)
+
+      // Policies (as JSON string)
+      if (formData.policies.length) fd.append('policies', JSON.stringify(formData.policies))
+
+      // Owner
+      if (formData.propertyOwner) fd.append('owner_id', formData.propertyOwner)
+
+      // Agreement - common
+      if (formData.acquisitionMethod) fd.append('acquisition_method', formData.acquisitionMethod)
+
+      // Agreement - Rented specific
+      if (formData.acquisitionMethod === 'Rented') {
+        if (formData.rentAmount) fd.append('rent_amount', formData.rentAmount)
+        if (formData.rentFrequency) fd.append('rent_frequency', formData.rentFrequency)
+        if (formData.paymentMethod) fd.append('payment_method', formData.paymentMethod)
+        if (formData.tenancyStartDate) fd.append('tenancy_start_date', formData.tenancyStartDate)
+        if (formData.tenancyEndDate) fd.append('tenancy_end_date', formData.tenancyEndDate)
+        if (formData.tenancyAgreement) fd.append('tenancy_agreement', formData.tenancyAgreement)
+        if (formData.ejariCertificate) fd.append('ejari_certificate', formData.ejariCertificate)
+        if (formData.dcpmLetter) fd.append('dcpm_letter', formData.dcpmLetter)
+      }
+
+      // Agreement - Bought (Cash) specific
+      if (formData.acquisitionMethod === 'Bought (Cash)') {
+        if (formData.purchasePrice) fd.append('purchase_price', formData.purchasePrice)
+        if (formData.purchaseDate) fd.append('purchase_date', formData.purchaseDate)
+        if (formData.spa) fd.append('spa', formData.spa)
+        if (formData.paymentProof) fd.append('payment_proof', formData.paymentProof)
+      }
+
+      // Agreement - Financed specific
+      if (formData.acquisitionMethod === 'Financed') {
+        if (formData.purchasePrice) fd.append('purchase_price', formData.purchasePrice)
+        if (formData.financeItems.length) fd.append('finance_items', JSON.stringify(formData.financeItems))
+        if (formData.spa) fd.append('spa', formData.spa)
+      }
+
+      // Agreement - Common utilities
+      if (formData.dewaNumber) fd.append('dewa_number', formData.dewaNumber)
+      if (formData.internetAccountNumber) fd.append('internet_account_number', formData.internetAccountNumber)
+      if (formData.gasNumber) fd.append('gas_number', formData.gasNumber)
+
+      // File uploads - Photos
+      formData.photos.forEach(photo => fd.append('photos[]', photo))
+
+      await createProperty(fd)
+      window.location.href = getLocalizedUrl('/properties/list', locale as Locale)
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to create property. Please try again.'
+      setError(typeof message === 'string' ? message : JSON.stringify(message))
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -218,7 +339,7 @@ const StepPreview = ({ activeStep, handlePrev, formData }: StepProps) => {
       <Grid size={{ xs: 12 }}>
         <Divider />
         <SectionTitle>Property Owner</SectionTitle>
-        <InfoRow label='Owner' value={propertyOwners[formData.propertyOwner] || ''} />
+        <InfoRow label='Owner' value={selectedOwner ? `${selectedOwner.full_name} — ${selectedOwner.email}` : ''} />
       </Grid>
 
       {/* Agreement */}
@@ -226,17 +347,65 @@ const StepPreview = ({ activeStep, handlePrev, formData }: StepProps) => {
         <Divider />
         <SectionTitle>Agreement</SectionTitle>
         <InfoRow label='Acquisition Method' value={formData.acquisitionMethod} />
-        <InfoRow label='Rent Amount' value={formData.rentAmount ? `AED ${Number(formData.rentAmount).toLocaleString()}` : ''} />
-        <InfoRow label='Rent Frequency' value={formData.rentFrequency} />
-        <InfoRow label='Payment Method' value={formData.paymentMethod} />
-        <InfoRow label='Tenancy Period' value={formData.tenancyStartDate && formData.tenancyEndDate ? `${formData.tenancyStartDate} to ${formData.tenancyEndDate}` : ''} />
-        <InfoRow label='Tenancy Agreement' value={formData.tenancyAgreement?.name || 'Not uploaded'} />
-        <InfoRow label='Ejari Certificate' value={formData.ejariCertificate?.name || 'Not uploaded'} />
-        <InfoRow label='DCPM Letter' value={formData.dcpmLetter?.name || 'Not uploaded'} />
+
+        {/* Rented preview */}
+        {formData.acquisitionMethod === 'Rented' && (
+          <>
+            <InfoRow label='Rent Amount' value={formData.rentAmount ? `AED ${Number(formData.rentAmount).toLocaleString()}` : ''} />
+            <InfoRow label='Rent Frequency' value={formData.rentFrequency} />
+            <InfoRow label='Payment Method' value={formData.paymentMethod} />
+            <InfoRow label='Tenancy Period' value={formData.tenancyStartDate && formData.tenancyEndDate ? `${formData.tenancyStartDate} to ${formData.tenancyEndDate}` : ''} />
+            <InfoRow label='Tenancy Agreement' value={formData.tenancyAgreement?.name || 'Not uploaded'} />
+            <InfoRow label='Ejari Certificate' value={formData.ejariCertificate?.name || 'Not uploaded'} />
+            <InfoRow label='DCPM Letter' value={formData.dcpmLetter?.name || 'Not uploaded'} />
+          </>
+        )}
+
+        {/* Bought (Cash) preview */}
+        {formData.acquisitionMethod === 'Bought (Cash)' && (
+          <>
+            <InfoRow label='Purchase Price' value={formData.purchasePrice ? `AED ${Number(formData.purchasePrice).toLocaleString()}` : ''} />
+            <InfoRow label='Purchase Date' value={formData.purchaseDate} />
+            <InfoRow label='Sale Purchase Agreement' value={formData.spa?.name || 'Not uploaded'} />
+            <InfoRow label='Payment Proof' value={formData.paymentProof?.name || 'Not uploaded'} />
+          </>
+        )}
+
+        {/* Financed preview */}
+        {formData.acquisitionMethod === 'Financed' && (
+          <>
+            <InfoRow label='Purchase Price' value={formData.purchasePrice ? `AED ${Number(formData.purchasePrice).toLocaleString()}` : ''} />
+            {formData.financeItems.length > 0 && (
+              <div className='mbs-2'>
+                <Typography variant='body2' color='text.secondary' className='font-medium mbe-1'>Finance Items:</Typography>
+                {formData.financeItems.map((item, i) => (
+                  <div key={i} className='flex gap-4 mbe-1 items-center'>
+                    <Typography variant='body2'>{item.label}</Typography>
+                    <Typography variant='body2'>AED {Number(item.amount).toLocaleString()}</Typography>
+                    <Typography variant='body2'>{item.dueDate}</Typography>
+                    <Chip label={item.status} size='small' variant='tonal' color={item.status === 'Paid' ? 'success' : 'warning'} />
+                  </div>
+                ))}
+                <Divider className='mbs-2 mbe-1' />
+                <InfoRow label='Total Amount' value={`AED ${formData.financeItems.reduce((s, i) => s + (Number(i.amount) || 0), 0).toLocaleString()}`} />
+                <InfoRow label='Total Paid' value={`AED ${formData.financeItems.filter(i => i.status === 'Paid').reduce((s, i) => s + (Number(i.amount) || 0), 0).toLocaleString()}`} />
+              </div>
+            )}
+            <InfoRow label='Sale Purchase Agreement' value={formData.spa?.name || 'Not uploaded'} />
+          </>
+        )}
+
+        {/* Common utilities */}
         <InfoRow label='DEWA Number' value={formData.dewaNumber} />
         <InfoRow label='Internet Account' value={formData.internetAccountNumber} />
         <InfoRow label='Gas Number' value={formData.gasNumber} />
       </Grid>
+
+      {error && (
+        <Grid size={{ xs: 12 }}>
+          <Alert severity='error'>{error}</Alert>
+        </Grid>
+      )}
 
       <Grid size={{ xs: 12 }}>
         <Alert severity='info'>
@@ -250,12 +419,19 @@ const StepPreview = ({ activeStep, handlePrev, formData }: StepProps) => {
             variant='tonal'
             color='secondary'
             onClick={handlePrev}
+            disabled={loading}
             startIcon={<DirectionalIcon ltrIconClass='tabler-arrow-left' rtlIconClass='tabler-arrow-right' />}
           >
             Previous
           </Button>
-          <Button variant='contained' color='success' onClick={handleSubmit} endIcon={<i className='tabler-check' />}>
-            Submit Property
+          <Button
+            variant='contained'
+            color='success'
+            onClick={handleSubmit}
+            disabled={loading}
+            endIcon={loading ? <CircularProgress size={18} color='inherit' /> : <i className='tabler-check' />}
+          >
+            {loading ? 'Submitting...' : 'Submit Property'}
           </Button>
         </div>
       </Grid>

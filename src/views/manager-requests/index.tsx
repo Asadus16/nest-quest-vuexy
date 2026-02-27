@@ -13,22 +13,30 @@ import CircularProgress from '@mui/material/CircularProgress'
 
 // Type Imports
 import type { OwnerInvitationType } from '@/types/apps/propertyOwnerTypes'
+import type { TenantInvitationType } from '@/types/apps/tenantTypes'
+
+// Hook Imports
+import { useRole } from '@/contexts/roleContext'
 
 // Service Imports
 import { getOwnerInvitations } from '@/services/ownerManagerRequests'
+import { getTenantInvitations } from '@/services/tenantManagerRequests'
 
 // Component Imports
 import ManagerRequestTable from './ManagerRequestTable'
 import ManagerRequestCards from './ManagerRequestCards'
 
+export type ManagerInvitationType = OwnerInvitationType | TenantInvitationType
+
 const ManagerRequestList = () => {
   const [activeTab, setActiveTab] = useState('invites')
   const [loading, setLoading] = useState(true)
-  const [invitations, setInvitations] = useState<OwnerInvitationType[]>([])
+  const [invitations, setInvitations] = useState<ManagerInvitationType[]>([])
+  const { role } = useRole()
 
   const fetchData = useCallback(async () => {
     try {
-      const data = await getOwnerInvitations()
+      const data = role === 'tenant' ? await getTenantInvitations() : await getOwnerInvitations()
 
       setInvitations(data)
     } catch {
@@ -36,7 +44,7 @@ const ManagerRequestList = () => {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [role])
 
   useEffect(() => {
     fetchData()

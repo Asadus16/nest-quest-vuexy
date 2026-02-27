@@ -28,7 +28,7 @@ const TableFilters = ({
     () => {
       const filteredData = propertyData?.filter(property => {
         if (status && property.status !== status) return false
-        if (type && property.type !== type) return false
+        if (type && property.property_type !== type) return false
         if (city && property.city !== city) return false
 
         return true
@@ -55,9 +55,9 @@ const TableFilters = ({
             }}
           >
             <MenuItem value=''>Select Status</MenuItem>
-            <MenuItem value='Occupied'>Occupied</MenuItem>
-            <MenuItem value='Vacant'>Vacant</MenuItem>
-            <MenuItem value='Under Maintenance'>Under Maintenance</MenuItem>
+            <MenuItem value='OCCUPIED'>Occupied</MenuItem>
+            <MenuItem value='VACANT'>Vacant</MenuItem>
+            <MenuItem value='UNDER_MAINTENANCE'>Under Maintenance</MenuItem>
           </CustomTextField>
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>

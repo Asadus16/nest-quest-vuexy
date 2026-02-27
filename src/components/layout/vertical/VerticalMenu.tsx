@@ -87,8 +87,33 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
         </MenuItem>
         {role === 'property-owner' && (
           <MenuSection label='Property Owner'>
+            <MenuItem href={`/${locale}/owner/properties`} icon={<i className='tabler-building' />}>
+              My Properties
+            </MenuItem>
+            <MenuItem href={`/${locale}/contracts/list`} icon={<i className='tabler-file-text' />}>
+              My Contracts
+            </MenuItem>
+            <MenuItem href={`/${locale}/property-owners`} icon={<i className='tabler-home-hand' />}>
+              Property Managers
+            </MenuItem>
+            <MenuItem href={`/${locale}/profile`} icon={<i className='tabler-user' />}>
+              Profile
+            </MenuItem>
+          </MenuSection>
+        )}
+        {role === 'tenant' && (
+          <MenuSection label='Tenant'>
+            <MenuItem href={`/${locale}/contracts/list`} icon={<i className='tabler-file-text' />}>
+              My Contracts
+            </MenuItem>
+            <MenuItem href={`/${locale}/notices`} icon={<i className='tabler-bell' />}>
+              Notices
+            </MenuItem>
+            <MenuItem href={`/${locale}/renewal-offers`} icon={<i className='tabler-refresh' />}>
+              Renewal Offers
+            </MenuItem>
             <MenuItem href={`/${locale}/manager-requests`} icon={<i className='tabler-mail' />}>
-              Manager Requests
+              Invites
             </MenuItem>
           </MenuSection>
         )}

@@ -94,6 +94,38 @@ export const wizardSteps: Partial<Record<UserRole, WizardStep[]>> = {
       component: StepComplete
     }
   ],
+  tenant: [
+    {
+      icon: 'tabler-user',
+      title: 'Personal Details',
+      subtitle: 'Name & Contact',
+      component: StepPersonalDetails
+    },
+    {
+      icon: 'tabler-lock',
+      title: 'Account Details',
+      subtitle: 'Email & Password',
+      component: StepAccountDetails
+    },
+    {
+      icon: 'tabler-file-check',
+      title: 'KYC',
+      subtitle: 'Documents',
+      component: StepKYC
+    },
+    {
+      icon: 'tabler-device-mobile',
+      title: 'Verification',
+      subtitle: 'Phone Verify',
+      component: StepVerification
+    },
+    {
+      icon: 'tabler-circle-check',
+      title: 'Complete',
+      subtitle: 'All Done',
+      component: StepComplete
+    }
+  ],
   guest: [
     {
       icon: 'tabler-user',

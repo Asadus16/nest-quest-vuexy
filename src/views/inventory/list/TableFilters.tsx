@@ -29,8 +29,8 @@ const TableFilters = ({
   useEffect(() => {
     const filteredData = tableData?.filter(item => {
       if (type && item.type !== type) return false
-      if (room && item.roomAssigned !== room) return false
-      if (property && item.propertyAssigned !== property) return false
+      if (room && item.room_assigned !== room) return false
+      if (property && (item.property?.public_name || '') !== property) return false
 
       return true
     })
@@ -39,8 +39,8 @@ const TableFilters = ({
   }, [type, room, property, tableData, setData])
 
   const types = [...new Set(tableData?.map(item => item.type))].sort()
-  const rooms = [...new Set(tableData?.map(item => item.roomAssigned))].sort()
-  const properties = [...new Set(tableData?.map(item => item.propertyAssigned))].sort()
+  const rooms = [...new Set(tableData?.map(item => item.room_assigned).filter(Boolean))].sort()
+  const properties = [...new Set(tableData?.map(item => item.property?.public_name).filter(Boolean))].sort()
 
   return (
     <CardContent>
@@ -73,7 +73,7 @@ const TableFilters = ({
           >
             <MenuItem value=''>All Rooms</MenuItem>
             {rooms.map(r => (
-              <MenuItem key={r} value={r}>
+              <MenuItem key={r} value={r!}>
                 {r}
               </MenuItem>
             ))}
@@ -90,7 +90,7 @@ const TableFilters = ({
           >
             <MenuItem value=''>All Properties</MenuItem>
             {properties.map(p => (
-              <MenuItem key={p} value={p}>
+              <MenuItem key={p} value={p!}>
                 {p}
               </MenuItem>
             ))}

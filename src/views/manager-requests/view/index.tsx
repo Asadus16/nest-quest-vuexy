@@ -14,10 +14,14 @@ import CircularProgress from '@mui/material/CircularProgress'
 import Typography from '@mui/material/Typography'
 
 // Type Imports
-import type { OwnerInvitationType } from '@/types/apps/propertyOwnerTypes'
+import type { ManagerInvitationType } from '../index'
+
+// Hook Imports
+import { useRole } from '@/contexts/roleContext'
 
 // Service Imports
 import { getOwnerInvitation, respondToInvitation } from '@/services/ownerManagerRequests'
+import { getTenantInvitation, respondToTenantInvitation } from '@/services/tenantManagerRequests'
 
 // Component Imports
 import ManagerLeftOverview from './manager-left-overview'
@@ -29,16 +33,17 @@ const LegalDocumentsTab = dynamic(() => import('./manager-right/legal-documents'
 const ViewManagerPage = () => {
   const params = useParams()
   const router = useRouter()
+  const { role } = useRole()
   const id = Number(params.id)
   const locale = params.lang as string
 
   const [loading, setLoading] = useState(true)
   const [responding, setResponding] = useState(false)
-  const [invitation, setInvitation] = useState<OwnerInvitationType | null>(null)
+  const [invitation, setInvitation] = useState<ManagerInvitationType | null>(null)
 
   const fetchData = useCallback(async () => {
     try {
-      const data = await getOwnerInvitation(id)
+      const data = role === 'tenant' ? await getTenantInvitation(id) : await getOwnerInvitation(id)
 
       setInvitation(data)
     } catch {
@@ -47,7 +52,7 @@ const ViewManagerPage = () => {
     } finally {
       setLoading(false)
     }
-  }, [id, locale, router])
+  }, [id, locale, router, role])
 
   useEffect(() => {
     fetchData()
@@ -57,7 +62,9 @@ const ViewManagerPage = () => {
     setResponding(true)
 
     try {
-      await respondToInvitation(id, status)
+      await (role === 'tenant'
+        ? respondToTenantInvitation(id, status)
+        : respondToInvitation(id, status))
       await fetchData()
     } catch {
       // Error handled silently

@@ -36,7 +36,7 @@ import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
-import type { OwnerInvitationType } from '@/types/apps/propertyOwnerTypes'
+import type { ManagerInvitationType } from './index'
 
 // Component Imports
 import TablePaginationComponent from '@components/TablePaginationComponent'
@@ -47,8 +47,12 @@ import CustomAvatar from '@core/components/mui/Avatar'
 import { getInitials } from '@/utils/getInitials'
 import { invitationStatusColors, invitationStatusLabels } from '@/utils/invitationStatusMap'
 
+// Hook Imports
+import { useRole } from '@/contexts/roleContext'
+
 // Service Imports
 import { respondToInvitation } from '@/services/ownerManagerRequests'
+import { respondToTenantInvitation } from '@/services/tenantManagerRequests'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
@@ -101,14 +105,14 @@ const DebouncedInput = ({
 }
 
 // Column Definitions
-const columnHelper = createColumnHelper<OwnerInvitationType>()
+const columnHelper = createColumnHelper<ManagerInvitationType>()
 
 const ManagerRequestTable = ({
   invitations,
   activeTab,
   onRefresh
 }: {
-  invitations: OwnerInvitationType[]
+  invitations: ManagerInvitationType[]
   activeTab: string
   onRefresh: () => void
 }) => {
@@ -116,6 +120,7 @@ const ManagerRequestTable = ({
   const router = useRouter()
   const params = useParams()
   const locale = params.lang as string
+  const { role } = useRole()
 
   // States
   const [rowSelection, setRowSelection] = useState({})
@@ -126,7 +131,9 @@ const ManagerRequestTable = ({
     setRespondingId(invitationId)
 
     try {
-      await respondToInvitation(invitationId, status)
+      await (role === 'tenant'
+        ? respondToTenantInvitation(invitationId, status)
+        : respondToInvitation(invitationId, status))
       onRefresh()
     } catch {
       // Error handled silently
@@ -148,7 +155,7 @@ const ManagerRequestTable = ({
     return invitations
   }, [invitations, activeTab])
 
-  const columns = useMemo<ColumnDef<OwnerInvitationType, any>[]>(
+  const columns = useMemo<ColumnDef<ManagerInvitationType, any>[]>(
     () => [
       {
         id: 'select',

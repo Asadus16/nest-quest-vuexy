@@ -1,31 +1,39 @@
 'use client'
 
+// React Imports
+import { useState, useEffect } from 'react'
+
 // MUI Imports
 import Grid from '@mui/material/Grid'
 import Typography from '@mui/material/Typography'
 import MenuItem from '@mui/material/MenuItem'
 import Button from '@mui/material/Button'
+import CircularProgress from '@mui/material/CircularProgress'
+import Alert from '@mui/material/Alert'
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
 import DirectionalIcon from '@components/DirectionalIcon'
 
+// Service Imports
+import { getLinkedOwners } from '@/services/properties'
+
 // Type Imports
 import type { StepProps } from '../types'
-
-// Static property owners list
-const propertyOwners = [
-  { value: '1', label: 'Ahmed Al Maktoum', email: 'ahmed.maktoum@gmail.com' },
-  { value: '2', label: 'Fatima Al Nahyan', email: 'fatima.nahyan@outlook.com' },
-  { value: '3', label: 'Mohammed Al Qasimi', email: 'mohammed.qasimi@yahoo.com' },
-  { value: '4', label: 'Sara Al Falasi', email: 'sara.falasi@gmail.com' },
-  { value: '5', label: 'Khalid Al Habtoor', email: 'khalid.habtoor@hotmail.com' },
-  { value: '6', label: 'Noura Al Ketbi', email: 'noura.ketbi@gmail.com' },
-  { value: '7', label: 'Omar Al Mansoori', email: 'omar.mansoori@outlook.com' },
-  { value: '8', label: 'Layla Al Zaabi', email: 'layla.zaabi@gmail.com' }
-]
+import type { LinkedOwnerType } from '@/types/apps/propertyTypes'
 
 const StepPropertyOwner = ({ activeStep, handleNext, handlePrev, formData, setFormData }: StepProps) => {
+  const [owners, setOwners] = useState<LinkedOwnerType[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    getLinkedOwners()
+      .then(setOwners)
+      .catch(() => setError('Failed to load property owners.'))
+      .finally(() => setLoading(false))
+  }, [])
+
   const isValid = formData.propertyOwner !== ''
 
   return (
@@ -36,21 +44,38 @@ const StepPropertyOwner = ({ activeStep, handleNext, handlePrev, formData, setFo
           Select the property owner for this listing
         </Typography>
       </Grid>
+
+      {error && (
+        <Grid size={{ xs: 12 }}>
+          <Alert severity='error'>{error}</Alert>
+        </Grid>
+      )}
+
       <Grid size={{ xs: 12 }}>
-        <CustomTextField
-          select
-          fullWidth
-          label='Property Owner'
-          value={formData.propertyOwner}
-          onChange={e => setFormData({ ...formData, propertyOwner: e.target.value })}
-        >
-          <MenuItem value=''>Select Owner</MenuItem>
-          {propertyOwners.map(owner => (
-            <MenuItem key={owner.value} value={owner.value}>
-              {owner.label} — {owner.email}
-            </MenuItem>
-          ))}
-        </CustomTextField>
+        {loading ? (
+          <div className='flex items-center gap-2'>
+            <CircularProgress size={20} />
+            <Typography variant='body2' color='text.secondary'>Loading owners...</Typography>
+          </div>
+        ) : (
+          <CustomTextField
+            select
+            fullWidth
+            label='Property Owner'
+            value={formData.propertyOwner}
+            onChange={e => setFormData({ ...formData, propertyOwner: e.target.value })}
+          >
+            <MenuItem value=''>Select Owner</MenuItem>
+            {owners.map(owner => (
+              <MenuItem key={owner.id} value={String(owner.id)}>
+                {owner.full_name} — {owner.email}
+              </MenuItem>
+            ))}
+            {owners.length === 0 && (
+              <MenuItem disabled>No linked owners found. Invite an owner first.</MenuItem>
+            )}
+          </CustomTextField>
+        )}
       </Grid>
 
       <Grid size={{ xs: 12 }}>

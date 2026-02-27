@@ -2,52 +2,44 @@
 import Grid from '@mui/material/Grid'
 
 // Type Imports
+import type { InventoryStatsType } from '@/types/apps/inventoryTypes'
 import type { UserDataType } from '@components/card-statistics/HorizontalWithSubtitle'
 
 // Component Imports
 import HorizontalWithSubtitle from '@components/card-statistics/HorizontalWithSubtitle'
 
-// Vars
-const data: UserDataType[] = [
-  {
-    title: 'Total Items',
-    stats: '20',
-    avatarIcon: 'tabler-packages',
-    avatarColor: 'primary',
-    trend: 'positive',
-    trendNumber: '12%',
-    subtitle: 'All inventory items'
-  },
-  {
-    title: 'Total Worth',
-    stats: 'AED 80,900',
-    avatarIcon: 'tabler-currency-dirham',
-    avatarColor: 'success',
-    trend: 'positive',
-    trendNumber: '8%',
-    subtitle: 'Combined asset value'
-  },
-  {
-    title: 'Under Warranty',
-    stats: '14',
-    avatarIcon: 'tabler-shield-check',
-    avatarColor: 'info',
-    trend: 'positive',
-    trendNumber: '5%',
-    subtitle: 'Active warranties'
-  },
-  {
-    title: 'Warranty Expired',
-    stats: '6',
-    avatarIcon: 'tabler-shield-x',
-    avatarColor: 'warning',
-    trend: 'negative',
-    trendNumber: '3%',
-    subtitle: 'Need renewal'
-  }
-]
+const InventoryListCards = ({ stats }: { stats: InventoryStatsType }) => {
+  const data: UserDataType[] = [
+    {
+      title: 'Total Items',
+      stats: String(stats.total_items),
+      avatarIcon: 'tabler-packages',
+      avatarColor: 'primary',
+      subtitle: 'All inventory items'
+    },
+    {
+      title: 'Total Worth',
+      stats: `AED ${stats.total_worth.toLocaleString()}`,
+      avatarIcon: 'tabler-currency-dirham',
+      avatarColor: 'success',
+      subtitle: 'Combined asset value'
+    },
+    {
+      title: 'Under Warranty',
+      stats: String(stats.under_warranty),
+      avatarIcon: 'tabler-shield-check',
+      avatarColor: 'info',
+      subtitle: 'Active warranties'
+    },
+    {
+      title: 'Warranty Expired',
+      stats: String(stats.warranty_expired),
+      avatarIcon: 'tabler-shield-x',
+      avatarColor: 'warning',
+      subtitle: 'Need renewal'
+    }
+  ]
 
-const InventoryListCards = () => {
   return (
     <Grid container spacing={6}>
       {data.map((item, i) => (

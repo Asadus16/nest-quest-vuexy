@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 // MUI Imports
 import Button from '@mui/material/Button'
@@ -11,12 +11,17 @@ import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 import InputAdornment from '@mui/material/InputAdornment'
+import Alert from '@mui/material/Alert'
 
 // Third-party Imports
 import { useForm, Controller } from 'react-hook-form'
 
 // Type Imports
-import type { InventoryType } from '@/types/apps/inventoryTypes'
+import type { PropertyType } from '@/types/apps/propertyTypes'
+
+// Service Imports
+import { createInventory } from '@/services/inventory'
+import { getProperties } from '@/services/properties'
 
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
@@ -25,8 +30,7 @@ import FileUpload from '@core/components/FileUpload'
 type Props = {
   open: boolean
   handleClose: () => void
-  inventoryData?: InventoryType[]
-  setData: (data: InventoryType[]) => void
+  onSuccess: () => void
 }
 
 type FormDataType = {
@@ -39,7 +43,7 @@ type FormDataType = {
   currentWorth: string
   warrantyStart: string
   warrantyEnd: string
-  propertyAssigned: string
+  propertyId: string
   notes: string
 }
 
@@ -69,29 +73,6 @@ const rooms = [
   'Dining Room'
 ]
 
-const properties = [
-  'Marina Heights 2BR',
-  'Palm Villa Deluxe',
-  'Business Bay Studio',
-  'JVC Family Townhouse',
-  'Reem Island 1BR',
-  'Downtown Penthouse',
-  'Sharjah Family Flat',
-  'Yas Island Duplex',
-  'Dubai Hills 3BR',
-  'DIFC Office Suite',
-  'Al Barsha Studio',
-  'Arabian Ranches Villa',
-  'Ajman Tower 2BR',
-  'Saadiyat Beach Villa',
-  'Motor City Loft',
-  'JBR Waterfront 2BR',
-  'Silicon Oasis 1BR',
-  'Corniche Apartment',
-  'Al Majaz Flat',
-  'RAK Beachfront Villa'
-]
-
 const defaultValues: FormDataType = {
   name: '',
   description: '',
@@ -102,16 +83,19 @@ const defaultValues: FormDataType = {
   currentWorth: '',
   warrantyStart: '',
   warrantyEnd: '',
-  propertyAssigned: '',
+  propertyId: '',
   notes: ''
 }
 
 const AddInventoryDrawer = (props: Props) => {
   // Props
-  const { open, handleClose, inventoryData, setData } = props
+  const { open, handleClose, onSuccess } = props
 
   // States
-  const [photos, setPhotos] = useState<File | null>(null)
+  const [photo, setPhoto] = useState<File | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [properties, setProperties] = useState<PropertyType[]>([])
 
   // Hooks
   const {
@@ -121,31 +105,50 @@ const AddInventoryDrawer = (props: Props) => {
     formState: { errors }
   } = useForm<FormDataType>({ defaultValues })
 
-  const onSubmit = (data: FormDataType) => {
-    const newItem: InventoryType = {
-      id: (inventoryData?.length ?? 0) + 1,
-      name: data.name,
-      description: data.description,
-      type: data.type,
-      roomAssigned: data.roomAssigned,
-      brand: data.brand,
-      serialNumber: data.serialNumber,
-      currentWorth: Number(data.currentWorth),
-      warrantyStart: data.warrantyStart,
-      warrantyEnd: data.warrantyEnd,
-      propertyAssigned: data.propertyAssigned,
-      photos: photos ? [URL.createObjectURL(photos)] : [],
-      notes: data.notes
+  useEffect(() => {
+    if (open) {
+      getProperties()
+        .then(setProperties)
+        .catch(() => {})
     }
+  }, [open])
 
-    setData([...(inventoryData ?? []), newItem])
-    handleReset()
+  const onSubmit = async (data: FormDataType) => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const fd = new FormData()
+
+      fd.append('name', data.name)
+      fd.append('type', data.type)
+
+      if (data.description) fd.append('description', data.description)
+      if (data.roomAssigned) fd.append('room_assigned', data.roomAssigned)
+      if (data.brand) fd.append('brand', data.brand)
+      if (data.serialNumber) fd.append('serial_number', data.serialNumber)
+      if (data.currentWorth) fd.append('current_worth', data.currentWorth)
+      if (data.warrantyStart) fd.append('warranty_start', data.warrantyStart)
+      if (data.warrantyEnd) fd.append('warranty_end', data.warrantyEnd)
+      if (data.propertyId) fd.append('property_id', data.propertyId)
+      if (data.notes) fd.append('notes', data.notes)
+      if (photo) fd.append('photo', photo)
+
+      await createInventory(fd)
+      handleReset()
+      onSuccess()
+    } catch (err: any) {
+      setError(err.message || 'Failed to create inventory item.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleReset = () => {
     handleClose()
     resetForm(defaultValues)
-    setPhotos(null)
+    setPhoto(null)
+    setError(null)
   }
 
   return (
@@ -166,6 +169,7 @@ const AddInventoryDrawer = (props: Props) => {
       <Divider />
       <div>
         <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-6 p-6'>
+          {error && <Alert severity='error'>{error}</Alert>}
           <Controller
             name='name'
             control={control}
@@ -218,15 +222,8 @@ const AddInventoryDrawer = (props: Props) => {
           <Controller
             name='roomAssigned'
             control={control}
-            rules={{ required: true }}
             render={({ field }) => (
-              <CustomTextField
-                select
-                fullWidth
-                label='Room Assigned'
-                {...field}
-                {...(errors.roomAssigned && { error: true, helperText: 'This field is required.' })}
-              >
+              <CustomTextField select fullWidth label='Room Assigned' {...field}>
                 <MenuItem value=''>Select Room</MenuItem>
                 {rooms.map(r => (
                   <MenuItem key={r} value={r}>
@@ -253,7 +250,6 @@ const AddInventoryDrawer = (props: Props) => {
           <Controller
             name='currentWorth'
             control={control}
-            rules={{ required: true }}
             render={({ field }) => (
               <CustomTextField
                 {...field}
@@ -267,7 +263,6 @@ const AddInventoryDrawer = (props: Props) => {
                   }
                 }}
                 onChange={e => field.onChange(e.target.value.replace(/\D/g, ''))}
-                {...(errors.currentWorth && { error: true, helperText: 'This field is required.' })}
               />
             )}
           />
@@ -298,30 +293,23 @@ const AddInventoryDrawer = (props: Props) => {
             )}
           />
           <Controller
-            name='propertyAssigned'
+            name='propertyId'
             control={control}
-            rules={{ required: true }}
             render={({ field }) => (
-              <CustomTextField
-                select
-                fullWidth
-                label='Property Assigned To'
-                {...field}
-                {...(errors.propertyAssigned && { error: true, helperText: 'This field is required.' })}
-              >
+              <CustomTextField select fullWidth label='Property Assigned To' {...field}>
                 <MenuItem value=''>Select Property</MenuItem>
                 {properties.map(p => (
-                  <MenuItem key={p} value={p}>
-                    {p}
+                  <MenuItem key={p.id} value={String(p.id)}>
+                    {p.public_name || `${p.building_name} - ${p.unit_number}`}
                   </MenuItem>
                 ))}
               </CustomTextField>
             )}
           />
           <FileUpload
-            label='Upload Photos'
+            label='Upload Photo'
             accept='.jpg,.jpeg,.png,.webp'
-            onChange={f => setPhotos(f)}
+            onChange={f => setPhoto(f)}
           />
           <Controller
             name='notes'
@@ -338,8 +326,8 @@ const AddInventoryDrawer = (props: Props) => {
             )}
           />
           <div className='flex items-center gap-4'>
-            <Button variant='contained' type='submit'>
-              Submit
+            <Button variant='contained' type='submit' disabled={loading}>
+              {loading ? 'Submitting...' : 'Submit'}
             </Button>
             <Button variant='tonal' color='error' type='reset' onClick={handleReset}>
               Cancel

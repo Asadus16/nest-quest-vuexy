@@ -10,11 +10,12 @@ export type OwnerInvitationType = {
     nationality: string | null
     emirates_id_number: string | null
     emirates_id_expiry: string | null
-    emirates_id_copy: string | null
+    emirates_id_front_url: string | null
+    emirates_id_back_url: string | null
     passport_number: string | null
     passport_expiry: string | null
     passport_issued_country: string | null
-    passport_copy: string | null
+    passport_copy_url: string | null
     bank_name: string | null
     bank_branch: string | null
     account_number: string | null
@@ -32,10 +33,17 @@ export type OwnerInvitationType = {
     nationality: string | null
     emirates_id_number: string | null
     emirates_id_expiry: string | null
-    emirates_id_copy: string | null
+    emirates_id_front_url: string | null
+    emirates_id_back_url: string | null
     passport_number: string | null
     passport_expiry: string | null
-    passport_copy: string | null
+    passport_copy_url: string | null
+    company_name: string | null
+    company_email: string | null
+    company_logo_url: string | null
+    trade_license_number: string | null
+    trade_license_expiry: string | null
+    trade_license_url: string | null
     user?: {
       email: string
       phone: string | null
