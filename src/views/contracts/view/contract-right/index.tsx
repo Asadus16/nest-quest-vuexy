@@ -9,11 +9,12 @@ import Tab from '@mui/material/Tab'
 import TabContext from '@mui/lab/TabContext'
 import TabPanel from '@mui/lab/TabPanel'
 import Grid from '@mui/material/Grid'
+import Badge from '@mui/material/Badge'
 
 // Component Imports
 import CustomTabList from '@core/components/mui/TabList'
 
-const ContractRight = ({ tabContentList }: { tabContentList: { [key: string]: ReactElement } }) => {
+const ContractRight = ({ tabContentList, unreadNotices = 0 }: { tabContentList: { [key: string]: ReactElement }; unreadNotices?: number }) => {
   const [activeTab, setActiveTab] = useState('overview')
 
   const handleChange = (event: SyntheticEvent, value: string) => {
@@ -34,6 +35,17 @@ const ContractRight = ({ tabContentList }: { tabContentList: { [key: string]: Re
               label='Payment Schedule'
               iconPosition='start'
             />
+            <Tab
+              icon={
+                <Badge variant='dot' color='error' invisible={unreadNotices === 0}>
+                  <i className='tabler-bell' />
+                </Badge>
+              }
+              value='notices'
+              label='Notices'
+              iconPosition='start'
+            />
+            <Tab icon={<i className='tabler-activity' />} value='activity' label='Activity' iconPosition='start' />
           </CustomTabList>
         </Grid>
         <Grid size={{ xs: 12 }}>

@@ -29,8 +29,8 @@ const TableFilters = ({
   useEffect(() => {
     const filteredData = tableData?.filter(item => {
       if (status && item.status !== status) return false
-      if (frequency && item.frequency !== frequency) return false
-      if (property && item.property !== property) return false
+      if (frequency && item.rent_frequency !== frequency) return false
+      if (property && item.property?.public_name !== property) return false
 
       return true
     })
@@ -38,7 +38,7 @@ const TableFilters = ({
     setData(filteredData || [])
   }, [status, frequency, property, tableData, setData])
 
-  const properties = [...new Set(tableData?.map(item => item.property))].sort()
+  const properties = [...new Set(tableData?.map(item => item.property?.public_name).filter(Boolean))].sort()
 
   return (
     <CardContent>
@@ -53,9 +53,9 @@ const TableFilters = ({
             label='Status'
           >
             <MenuItem value=''>All Statuses</MenuItem>
-            <MenuItem value='Active'>Active</MenuItem>
-            <MenuItem value='Expired'>Expired</MenuItem>
-            <MenuItem value='Draft'>Draft</MenuItem>
+            <MenuItem value='ACTIVE'>Active</MenuItem>
+            <MenuItem value='EXPIRED'>Expired</MenuItem>
+            <MenuItem value='DRAFT'>Draft</MenuItem>
           </CustomTextField>
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>
@@ -68,10 +68,10 @@ const TableFilters = ({
             label='Frequency'
           >
             <MenuItem value=''>All Frequencies</MenuItem>
-            <MenuItem value='Monthly'>Monthly</MenuItem>
-            <MenuItem value='Quarterly'>Quarterly</MenuItem>
-            <MenuItem value='Semi-Annually'>Semi-Annually</MenuItem>
-            <MenuItem value='Annually'>Annually</MenuItem>
+            <MenuItem value='MONTHLY'>Monthly</MenuItem>
+            <MenuItem value='QUARTERLY'>Quarterly</MenuItem>
+            <MenuItem value='SEMI_ANNUALLY'>Semi-Annually</MenuItem>
+            <MenuItem value='ANNUALLY'>Annually</MenuItem>
           </CustomTextField>
         </Grid>
         <Grid size={{ xs: 12, sm: 4 }}>

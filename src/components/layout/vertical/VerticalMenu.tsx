@@ -1,3 +1,6 @@
+// React Imports
+import { useState, useEffect } from 'react'
+
 // Next Imports
 import { useParams } from 'next/navigation'
 
@@ -14,11 +17,12 @@ import type { VerticalMenuContextProps } from '@menu/components/vertical-menu/Me
 // Component Imports
 import { Menu, MenuItem, SubMenu, MenuSection } from '@menu/vertical-menu'
 
-// import { GenerateVerticalMenu } from '@components/GenerateMenu'
-
 // Hook Imports
 import useVerticalNav from '@menu/hooks/useVerticalNav'
 import { useRole } from '@/contexts/roleContext'
+
+// Service Imports
+import { getUnreadNoticeCount } from '@/services/tenancy'
 
 // Styled Component Imports
 import StyledVerticalNavExpandIcon from '@menu/styles/vertical/StyledVerticalNavExpandIcon'
@@ -52,6 +56,19 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
   const verticalNavOptions = useVerticalNav()
   const params = useParams()
   const { role } = useRole()
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  // Fetch unread notice count for tenant
+  useEffect(() => {
+    if (role !== 'tenant') return
+    let mounted = true
+
+    getUnreadNoticeCount()
+      .then(count => { if (mounted) setUnreadCount(count) })
+      .catch(() => {})
+
+    return () => { mounted = false }
+  }, [role])
 
   // Vars
   const { isBreakpointReached, transitionDuration } = verticalNavOptions
@@ -103,14 +120,24 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
         )}
         {role === 'tenant' && (
           <MenuSection label='Tenant'>
-            <MenuItem href={`/${locale}/contracts/list`} icon={<i className='tabler-file-text' />}>
+            <MenuItem
+              href={`/${locale}/contracts/list`}
+              icon={<i className='tabler-file-text' />}
+              suffix={
+                unreadCount > 0 ? (
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--mui-palette-error-main)',
+                      display: 'inline-block'
+                    }}
+                  />
+                ) : undefined
+              }
+            >
               My Contracts
-            </MenuItem>
-            <MenuItem href={`/${locale}/notices`} icon={<i className='tabler-bell' />}>
-              Notices
-            </MenuItem>
-            <MenuItem href={`/${locale}/renewal-offers`} icon={<i className='tabler-refresh' />}>
-              Renewal Offers
             </MenuItem>
             <MenuItem href={`/${locale}/manager-requests`} icon={<i className='tabler-mail' />}>
               Invites

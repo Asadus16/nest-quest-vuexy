@@ -5,7 +5,7 @@ import { useEffect, useState, useMemo } from 'react'
 
 // Next Imports
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 
 // MUI Imports
 import Card from '@mui/material/Card'
@@ -40,13 +40,16 @@ import type { RankingInfo } from '@tanstack/match-sorter-utils'
 // Type Imports
 import type { ThemeColor } from '@core/types'
 import type { ContractType } from '@/types/apps/contractTypes'
-
-// Type Imports
 import type { Locale } from '@configs/i18n'
+
+// Service Imports
+import { deleteTenancy } from '@/services/tenancy'
+
+// Context Imports
+import { useToast } from '@/contexts/toastContext'
 
 // Component Imports
 import TableFilters from './TableFilters'
-import OptionMenu from '@core/components/option-menu'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
@@ -111,22 +114,58 @@ const DebouncedInput = ({
 
 // Vars
 const statusObj: StatusObj = {
-  Active: 'success',
-  Expired: 'error',
-  Draft: 'warning'
+  ACTIVE: 'success',
+  EXPIRED: 'error',
+  DRAFT: 'warning',
+  CANCELLED: 'secondary'
+}
+
+const frequencyLabels: Record<string, string> = {
+  MONTHLY: 'Monthly',
+  QUARTERLY: 'Quarterly',
+  SEMI_ANNUALLY: 'Semi-Annually',
+  ANNUALLY: 'Annually'
+}
+
+const statusLabels: Record<string, string> = {
+  ACTIVE: 'Active',
+  EXPIRED: 'Expired',
+  DRAFT: 'Draft',
+  CANCELLED: 'Cancelled'
 }
 
 const columnHelper = createColumnHelper<ContractTypeWithAction>()
 
-const ContractListTable = ({ tableData }: { tableData?: ContractType[] }) => {
+const ContractListTable = ({
+  tableData,
+  onRefresh
+}: {
+  tableData: ContractType[]
+  onRefresh: () => void
+}) => {
+  // Hooks
+  const router = useRouter()
+  const { lang: locale } = useParams()
+  const toast = useToast()
+
   // States
   const [rowSelection, setRowSelection] = useState({})
-  const [data, setData] = useState(...[tableData])
-  const [filteredData, setFilteredData] = useState(data)
+  const [filteredData, setFilteredData] = useState(tableData)
   const [globalFilter, setGlobalFilter] = useState('')
 
-  // Hooks
-  const { lang: locale } = useParams()
+  useEffect(() => {
+    setFilteredData(tableData)
+  }, [tableData])
+
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteTenancy(id)
+      toast.success('Contract deleted successfully')
+      onRefresh()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete contract')
+    }
+  }
 
   const columns = useMemo<ColumnDef<ContractTypeWithAction, any>[]>(
     () => [
@@ -156,40 +195,42 @@ const ContractListTable = ({ tableData }: { tableData?: ContractType[] }) => {
         header: 'Tenant',
         cell: ({ row }) => (
           <Typography color='text.primary' className='font-medium'>
-            {row.original.tenant}
+            {row.original.tenant?.full_name || '-'}
           </Typography>
         )
       }),
       columnHelper.accessor('property', {
         header: 'Property',
-        cell: ({ row }) => <Typography>{row.original.property}</Typography>
+        cell: ({ row }) => <Typography>{row.original.property?.public_name || '-'}</Typography>
       }),
-      columnHelper.accessor('startDate', {
+      columnHelper.accessor('contract_start_date', {
         header: 'Start Date',
-        cell: ({ row }) => <Typography>{row.original.startDate}</Typography>
+        cell: ({ row }) => <Typography>{row.original.contract_start_date}</Typography>
       }),
-      columnHelper.accessor('endDate', {
+      columnHelper.accessor('contract_end_date', {
         header: 'End Date',
-        cell: ({ row }) => <Typography>{row.original.endDate}</Typography>
+        cell: ({ row }) => <Typography>{row.original.contract_end_date}</Typography>
       }),
-      columnHelper.accessor('rentAmount', {
+      columnHelper.accessor('rent_amount_total', {
         header: 'Rent',
         cell: ({ row }) => (
-          <Typography className='font-medium'>{`AED ${row.original.rentAmount.toLocaleString()}`}</Typography>
+          <Typography className='font-medium'>{`AED ${row.original.rent_amount_total.toLocaleString()}`}</Typography>
         )
       }),
-      columnHelper.accessor('frequency', {
+      columnHelper.accessor('rent_frequency', {
         header: 'Frequency',
-        cell: ({ row }) => <Typography>{row.original.frequency}</Typography>
+        cell: ({ row }) => (
+          <Typography>{frequencyLabels[row.original.rent_frequency] || row.original.rent_frequency}</Typography>
+        )
       }),
       columnHelper.accessor('status', {
         header: 'Status',
         cell: ({ row }) => (
           <Chip
             variant='tonal'
-            label={row.original.status}
+            label={statusLabels[row.original.status] || row.original.status}
             size='small'
-            color={statusObj[row.original.status]}
+            color={statusObj[row.original.status] || 'default'}
             className='capitalize'
           />
         )
@@ -198,33 +239,19 @@ const ContractListTable = ({ tableData }: { tableData?: ContractType[] }) => {
         header: 'Action',
         cell: ({ row }) => (
           <div className='flex items-center'>
-            <IconButton onClick={() => setData(data?.filter(item => item.id !== row.original.id))}>
+            <IconButton onClick={() => router.push(`/${locale}/view-contract/${row.original.id}`)}>
+              <i className='tabler-eye text-textSecondary' />
+            </IconButton>
+            <IconButton onClick={() => handleDelete(row.original.id)}>
               <i className='tabler-trash text-textSecondary' />
             </IconButton>
-            <OptionMenu
-              iconButtonProps={{ size: 'medium' }}
-              iconClassName='text-textSecondary'
-              options={[
-                {
-                  text: 'View',
-                  icon: 'tabler-eye',
-                  href: getLocalizedUrl(`/view-contract/${row.original.id}`, locale as Locale),
-                  linkProps: { className: 'flex items-center gap-2 text-textSecondary is-full' }
-                },
-                {
-                  text: 'Edit',
-                  icon: 'tabler-edit',
-                  menuItemProps: { className: 'flex items-center gap-2 text-textSecondary' }
-                }
-              ]}
-            />
           </div>
         ),
         enableSorting: false
       })
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, filteredData]
+    [router, locale]
   )
 
   const table = useReactTable({
@@ -259,7 +286,7 @@ const ContractListTable = ({ tableData }: { tableData?: ContractType[] }) => {
     <>
       <Card>
         <CardHeader title='Filters' className='pbe-4' />
-        <TableFilters setData={setFilteredData} tableData={data} />
+        <TableFilters setData={setFilteredData} tableData={tableData} />
         <div className='flex justify-between flex-col items-start md:flex-row md:items-center p-6 border-bs gap-4'>
           <CustomTextField
             select
@@ -278,14 +305,6 @@ const ContractListTable = ({ tableData }: { tableData?: ContractType[] }) => {
               placeholder='Search Contracts'
               className='max-sm:is-full'
             />
-            <Button
-              color='secondary'
-              variant='tonal'
-              startIcon={<i className='tabler-upload' />}
-              className='max-sm:is-full'
-            >
-              Export
-            </Button>
             <Button
               variant='contained'
               component={Link}
