@@ -6,30 +6,34 @@ import Chip from '@mui/material/Chip'
 import Divider from '@mui/material/Divider'
 import Button from '@mui/material/Button'
 
+// Type Imports
+import type { ContractDetailType } from '@/types/apps/contractTypes'
+
 // Component Imports
 import CustomAvatar from '@core/components/mui/Avatar'
 
-// Static contract data
-const contractData = {
-  tenant: 'Rashid Al Mualla',
-  property: 'Marina Heights 2BR',
-  status: 'Active',
-  startDate: '01 Jan 2025',
-  endDate: '31 Dec 2025',
-  rentAmount: 95000,
-  frequency: 'Quarterly',
-  furnishingStatus: 'Furnished',
-  ejariNumber: '2847593016',
-  contractType: 'Long-term Residential'
+const statusColor: Record<string, 'success' | 'error' | 'warning' | 'secondary'> = {
+  ACTIVE: 'success',
+  EXPIRED: 'error',
+  DRAFT: 'warning',
+  CANCELLED: 'secondary'
 }
 
-const statusColor: Record<string, 'success' | 'error' | 'warning'> = {
-  Active: 'success',
-  Expired: 'error',
-  Draft: 'warning'
+const statusLabels: Record<string, string> = {
+  ACTIVE: 'Active',
+  EXPIRED: 'Expired',
+  DRAFT: 'Draft',
+  CANCELLED: 'Cancelled'
 }
 
-const ContractDetails = () => {
+const frequencyLabels: Record<string, string> = {
+  MONTHLY: 'Monthly',
+  QUARTERLY: 'Quarterly',
+  SEMI_ANNUALLY: 'Semi-Annually',
+  ANNUALLY: 'Annually'
+}
+
+const ContractDetails = ({ contract }: { contract: ContractDetailType }) => {
   return (
     <Card>
       <CardContent className='flex flex-col pbs-12 gap-6'>
@@ -39,14 +43,14 @@ const ContractDetails = () => {
               <i className='tabler-home-check text-[60px]' />
             </CustomAvatar>
             <div className='flex flex-col items-center gap-1'>
-              <Typography variant='h5'>{contractData.property}</Typography>
+              <Typography variant='h5'>{contract.property?.public_name || '-'}</Typography>
               <Typography variant='body2' color='text.secondary'>
-                {contractData.contractType}
+                Long-term Residential
               </Typography>
             </div>
             <Chip
-              label={contractData.status}
-              color={statusColor[contractData.status]}
+              label={statusLabels[contract.status] || contract.status}
+              color={statusColor[contract.status] || 'default'}
               size='small'
               variant='tonal'
             />
@@ -57,7 +61,7 @@ const ContractDetails = () => {
                 <i className='tabler-currency-dirham' />
               </CustomAvatar>
               <div>
-                <Typography variant='h5'>AED {contractData.rentAmount.toLocaleString()}</Typography>
+                <Typography variant='h5'>AED {contract.rent_amount_total.toLocaleString()}</Typography>
                 <Typography variant='body2' color='text.secondary'>Rent / Year</Typography>
               </div>
             </div>
@@ -66,7 +70,7 @@ const ContractDetails = () => {
                 <i className='tabler-calendar-repeat' />
               </CustomAvatar>
               <div>
-                <Typography variant='h5'>{contractData.frequency}</Typography>
+                <Typography variant='h5'>{frequencyLabels[contract.rent_frequency] || contract.rent_frequency}</Typography>
                 <Typography variant='body2' color='text.secondary'>Payments</Typography>
               </div>
             </div>
@@ -81,43 +85,47 @@ const ContractDetails = () => {
                 <i className='tabler-user text-base mie-1 align-text-bottom' />
                 Tenant:
               </Typography>
-              <Typography>{contractData.tenant}</Typography>
+              <Typography>{contract.tenant?.full_name || '-'}</Typography>
             </div>
             <div className='flex items-center flex-wrap gap-x-1.5'>
               <Typography className='font-medium' color='text.primary'>
                 <i className='tabler-building text-base mie-1 align-text-bottom' />
                 Property:
               </Typography>
-              <Typography>{contractData.property}</Typography>
+              <Typography>{contract.property?.public_name || '-'}</Typography>
             </div>
             <div className='flex items-center flex-wrap gap-x-1.5'>
               <Typography className='font-medium' color='text.primary'>
                 <i className='tabler-calendar-event text-base mie-1 align-text-bottom' />
                 Start Date:
               </Typography>
-              <Typography>{contractData.startDate}</Typography>
+              <Typography>{contract.contract_start_date}</Typography>
             </div>
             <div className='flex items-center flex-wrap gap-x-1.5'>
               <Typography className='font-medium' color='text.primary'>
                 <i className='tabler-calendar-off text-base mie-1 align-text-bottom' />
                 End Date:
               </Typography>
-              <Typography>{contractData.endDate}</Typography>
+              <Typography>{contract.contract_end_date}</Typography>
             </div>
-            <div className='flex items-center flex-wrap gap-x-1.5'>
-              <Typography className='font-medium' color='text.primary'>
-                <i className='tabler-armchair text-base mie-1 align-text-bottom' />
-                Furnishing:
-              </Typography>
-              <Typography>{contractData.furnishingStatus}</Typography>
-            </div>
-            <div className='flex items-center flex-wrap gap-x-1.5'>
-              <Typography className='font-medium' color='text.primary'>
-                <i className='tabler-certificate text-base mie-1 align-text-bottom' />
-                Ejari No:
-              </Typography>
-              <Typography>{contractData.ejariNumber}</Typography>
-            </div>
+            {contract.furnishing_status && (
+              <div className='flex items-center flex-wrap gap-x-1.5'>
+                <Typography className='font-medium' color='text.primary'>
+                  <i className='tabler-armchair text-base mie-1 align-text-bottom' />
+                  Furnishing:
+                </Typography>
+                <Typography>{contract.furnishing_status}</Typography>
+              </div>
+            )}
+            {contract.ejari_number && (
+              <div className='flex items-center flex-wrap gap-x-1.5'>
+                <Typography className='font-medium' color='text.primary'>
+                  <i className='tabler-certificate text-base mie-1 align-text-bottom' />
+                  Ejari No:
+                </Typography>
+                <Typography>{contract.ejari_number}</Typography>
+              </div>
+            )}
           </div>
         </div>
         <div className='flex gap-4 justify-center'>

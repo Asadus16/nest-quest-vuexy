@@ -8,39 +8,31 @@ import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import { styled } from '@mui/material/styles'
 
+// Type Imports
+import type { ContractDetailType } from '@/types/apps/contractTypes'
+
 // Component Imports
 import CustomAvatar from '@core/components/mui/Avatar'
 
-const PhotoPlaceholder = styled('div')(({ theme }) => ({
+const PhotoContainer = styled('div')(() => ({
   position: 'relative',
   width: '100%',
   paddingBlockEnd: '75%',
   borderRadius: 'var(--mui-shape-borderRadius)',
   overflow: 'hidden',
   border: `1px solid var(--mui-palette-divider)`,
-  backgroundColor: 'var(--mui-palette-action-hover)',
-  '& .placeholder-content': {
+  '& img': {
     position: 'absolute',
     inset: 0,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing(1)
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover'
   }
 }))
 
-// Static entry photos data
-const entryPhotos = [
-  { label: 'Living Room', icon: 'tabler-sofa', color: 'primary' as const, date: '01 Jan 2025' },
-  { label: 'Master Bedroom', icon: 'tabler-bed', color: 'info' as const, date: '01 Jan 2025' },
-  { label: 'Kitchen', icon: 'tabler-tools-kitchen-2', color: 'warning' as const, date: '01 Jan 2025' },
-  { label: 'Bathroom', icon: 'tabler-bath', color: 'error' as const, date: '01 Jan 2025' },
-  { label: 'Balcony View', icon: 'tabler-window', color: 'success' as const, date: '01 Jan 2025' },
-  { label: 'Entrance Hall', icon: 'tabler-door-enter', color: 'secondary' as const, date: '01 Jan 2025' }
-]
+const PhotosTab = ({ contract }: { contract: ContractDetailType }) => {
+  const photos = contract.entry_photos || []
 
-const PhotosTab = () => {
   return (
     <Grid container spacing={6}>
       <Grid size={{ xs: 12 }}>
@@ -56,31 +48,31 @@ const PhotosTab = () => {
             action={
               <Typography variant='body2' color='text.secondary'>
                 <i className='tabler-photo text-base mie-1 align-text-bottom' />
-                {entryPhotos.length} photos
+                {photos.length} photos
               </Typography>
             }
           />
           <CardContent>
-            <Grid container spacing={3}>
-              {entryPhotos.map((photo, index) => (
-                <Grid key={index} size={{ xs: 6, sm: 4, md: 4 }}>
-                  <PhotoPlaceholder>
-                    <div className='placeholder-content'>
-                      <CustomAvatar variant='rounded' skin='light' color={photo.color} size={48}>
-                        <i className={`${photo.icon} text-[24px]`} />
-                      </CustomAvatar>
-                      <Typography variant='body2' className='font-medium' color='text.primary'>
+            {photos.length > 0 ? (
+              <Grid container spacing={3}>
+                {photos.map(photo => (
+                  <Grid key={photo.id} size={{ xs: 6, sm: 4, md: 4 }}>
+                    <PhotoContainer>
+                      <img src={photo.url} alt={photo.label || `Entry photo ${photo.sort_order + 1}`} />
+                    </PhotoContainer>
+                    {photo.label && (
+                      <Typography variant='caption' color='text.secondary' className='mbs-1 block text-center'>
                         {photo.label}
                       </Typography>
-                      <Typography variant='caption' color='text.disabled'>
-                        <i className='tabler-calendar text-xs mie-0.5' />
-                        {photo.date}
-                      </Typography>
-                    </div>
-                  </PhotoPlaceholder>
-                </Grid>
-              ))}
-            </Grid>
+                    )}
+                  </Grid>
+                ))}
+              </Grid>
+            ) : (
+              <Typography variant='body2' color='text.secondary' className='text-center'>
+                No entry photos uploaded
+              </Typography>
+            )}
           </CardContent>
         </Card>
       </Grid>

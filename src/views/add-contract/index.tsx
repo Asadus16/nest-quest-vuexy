@@ -1,7 +1,10 @@
 'use client'
 
 // React Imports
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
+
+// Next Imports
+import { useParams, useRouter } from 'next/navigation'
 
 // MUI Imports
 import { styled } from '@mui/material/styles'
@@ -19,13 +22,28 @@ import InputAdornment from '@mui/material/InputAdornment'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Checkbox from '@mui/material/Checkbox'
 import Chip from '@mui/material/Chip'
+import CircularProgress from '@mui/material/CircularProgress'
 import type { StepProps as MuiStepProps } from '@mui/material/Step'
 
 // Third-party Imports
 import classnames from 'classnames'
 
 // Type Imports
-import type { PaymentScheduleRow } from '@/types/apps/contractTypes'
+import type { PaymentScheduleRow, LinkedTenantType } from '@/types/apps/contractTypes'
+import type { PropertyType } from '@/types/apps/propertyTypes'
+import type { InventoryType } from '@/types/apps/inventoryTypes'
+import type { Locale } from '@configs/i18n'
+
+// Service Imports
+import { getLinkedTenants, createTenancy } from '@/services/tenancy'
+import { getProperties } from '@/services/properties'
+import { getInventories } from '@/services/inventory'
+
+// Context Imports
+import { useToast } from '@/contexts/toastContext'
+
+// Util Imports
+import { getLocalizedUrl } from '@/utils/i18n'
 
 // Component Imports
 import CustomAvatar from '@core/components/mui/Avatar'
@@ -104,76 +122,12 @@ const steps = [
 ]
 
 // Data constants
-const propertyInventory: Record<
-  string,
-  { item: string; type: string; condition: string; room: string; qty: number }[]
-> = {
-  'Marina Heights 2BR': [
-    { item: 'Samsung Smart TV 65"', type: 'Electronics', condition: 'Good', room: 'Living Room', qty: 1 },
-    { item: 'Split AC Unit 2 Ton', type: 'HVAC', condition: 'Good', room: 'Master Bedroom', qty: 1 },
-    { item: 'Water Heater 80L', type: 'Plumbing', condition: 'Good', room: 'Bathroom', qty: 1 }
-  ],
-  'Palm Villa Deluxe': [
-    { item: 'L-Shaped Sofa Set', type: 'Furniture', condition: 'Excellent', room: 'Living Room', qty: 1 },
-    { item: 'King Size Bed Frame', type: 'Furniture', condition: 'Excellent', room: 'Master Bedroom', qty: 1 },
-    { item: 'LG Refrigerator 700L', type: 'Appliances', condition: 'Good', room: 'Kitchen', qty: 1 }
-  ],
-  'JVC Family Townhouse': [
-    { item: 'Bosch Dishwasher', type: 'Appliances', condition: 'Good', room: 'Kitchen', qty: 1 },
-    { item: 'Microwave Oven', type: 'Kitchenware', condition: 'Good', room: 'Kitchen', qty: 1 }
-  ],
-  'Downtown Penthouse': [
-    { item: 'Chandelier Crystal', type: 'Lighting', condition: 'Excellent', room: 'Dining Room', qty: 1 },
-    { item: 'Wall Art Canvas Set', type: 'Decor', condition: 'Excellent', room: 'Living Room', qty: 1 }
-  ],
-  'Saadiyat Beach Villa': [
-    { item: 'Persian Area Rug', type: 'Decor', condition: 'Good', room: 'Living Room', qty: 1 },
-    { item: 'Outdoor Dining Set', type: 'Outdoor', condition: 'Good', room: 'Balcony', qty: 1 }
-  ],
-  'Arabian Ranches Villa': [
-    { item: 'Security Camera System', type: 'Electronics', condition: 'Good', room: 'Living Room', qty: 1 }
-  ]
-}
-
-const tenants = [
-  'Rashid Al Mualla',
-  'Aisha Bin Zayed',
-  'Hassan Al Suwaidi',
-  'Mariam Al Shamsi',
-  'Yusuf Al Dhaheri',
-  'Fatima Al Blooshi',
-  'Omar Al Rashid',
-  'Dana Al Mazrouei',
-  'Khalifa Al Nuaimi',
-  'Hind Al Kaabi',
-  'Saeed Al Tayer',
-  'Noora Al Hashimi'
+const frequencyOptions = [
+  { value: 'MONTHLY', label: 'Monthly' },
+  { value: 'QUARTERLY', label: 'Quarterly' },
+  { value: 'SEMI_ANNUALLY', label: 'Semi-Annually' },
+  { value: 'ANNUALLY', label: 'Annually' }
 ]
-
-const properties = [
-  'Marina Heights 2BR',
-  'Palm Villa Deluxe',
-  'Business Bay Studio',
-  'JVC Family Townhouse',
-  'Reem Island 1BR',
-  'Downtown Penthouse',
-  'Sharjah Family Flat',
-  'Yas Island Duplex',
-  'Dubai Hills 3BR',
-  'DIFC Office Suite',
-  'Al Barsha Studio',
-  'Arabian Ranches Villa',
-  'Ajman Tower 2BR',
-  'Saadiyat Beach Villa',
-  'Motor City Loft',
-  'JBR Waterfront 2BR',
-  'Silicon Oasis 1BR',
-  'Corniche Apartment',
-  'Al Majaz Flat',
-  'RAK Beachfront Villa'
-]
-
-const frequencies = ['Weekly', 'Monthly', 'Quarterly', 'Semi-Annually', 'Annually']
 
 const utilitiesOptions = [
   'DEWA (Electricity & Water)',
@@ -193,7 +147,35 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 
 const AddContract = () => {
+  const router = useRouter()
+  const { lang: locale } = useParams()
+  const toast = useToast()
   const [activeStep, setActiveStep] = useState(0)
+  const [submitting, setSubmitting] = useState(false)
+
+  // API data
+  const [tenantsList, setTenantsList] = useState<LinkedTenantType[]>([])
+  const [propertiesList, setPropertiesList] = useState<PropertyType[]>([])
+  const [inventoryItems, setInventoryItems] = useState<InventoryType[]>([])
+
+  // Fetch tenants and properties on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [tenantsData, propertiesData] = await Promise.all([
+          getLinkedTenants(),
+          getProperties()
+        ])
+
+        setTenantsList(tenantsData)
+        setPropertiesList(propertiesData)
+      } catch {
+        // silently handle
+      }
+    }
+
+    fetchData()
+  }, [])
 
   const handleNext = () => {
     if (activeStep < steps.length - 1) {
@@ -208,12 +190,26 @@ const AddContract = () => {
   }
 
   // --- Section 1: Contract Details ---
-  const [tenant, setTenant] = useState('')
-  const [property, setProperty] = useState('')
+  const [tenantId, setTenantId] = useState('')
+  const [propertyId, setPropertyId] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [rentAmount, setRentAmount] = useState('')
   const [frequency, setFrequency] = useState('')
+
+  // When property changes, fetch inventory
+  useEffect(() => {
+    if (propertyId) {
+      getInventories(Number(propertyId))
+        .then(data => setInventoryItems(data))
+        .catch(() => setInventoryItems([]))
+    } else {
+      setInventoryItems([])
+    }
+  }, [propertyId])
+
+  // Get selected property's owner
+  const selectedProperty = propertiesList.find(p => p.id === Number(propertyId))
 
   // --- Section 2: Financial Details ---
   const [securityDepositRequired, setSecurityDepositRequired] = useState(false)
@@ -234,6 +230,8 @@ const AddContract = () => {
 
   // --- Section 6: Documents ---
   const [ejariNumber, setEjariNumber] = useState('')
+  const [contractPdf, setContractPdf] = useState<File | null>(null)
+  const [ejariCertificate, setEjariCertificate] = useState<File | null>(null)
 
   // --- Section 7: Entry Photos ---
   const [entryPhotos, setEntryPhotos] = useState<File[]>([])
@@ -293,13 +291,80 @@ const AddContract = () => {
     setPaymentRows(prev => prev.filter(r => r.id !== id))
   }
 
-  const handleSubmit = () => {
-    if (!tenant || !property || !startDate || !endDate || !rentAmount || !frequency) return
+  const handleSubmit = async () => {
+    if (!tenantId || !propertyId || !startDate || !endDate || !rentAmount || !frequency) return
 
-    alert('Contract created successfully!')
+    setSubmitting(true)
+
+    try {
+      const fd = new FormData()
+
+      fd.append('property_id', propertyId)
+      fd.append('tenant_id', tenantId)
+      fd.append('contract_start_date', startDate)
+      fd.append('contract_end_date', endDate)
+      fd.append('rent_amount_total', rentAmount)
+      fd.append('rent_frequency', frequency)
+
+      // Financial
+      fd.append('deposit_required', securityDepositRequired ? '1' : '0')
+
+      if (securityDepositRequired && securityDepositAmount) {
+        fd.append('deposit_amount', securityDepositAmount)
+      }
+
+      fd.append('agency_fee_required', agencyFeeRequired ? '1' : '0')
+
+      if (agencyFeeRequired && agencyFeeAmount) {
+        fd.append('agency_fee_amount', agencyFeeAmount)
+      }
+
+      // Utilities
+      fd.append('utilities_included', utilitiesIncluded ? '1' : '0')
+
+      if (utilitiesIncluded && selectedUtilities.length > 0) {
+        fd.append('utilities', JSON.stringify(selectedUtilities))
+      }
+
+      // Maintenance
+      fd.append('maintenance_included', maintenanceIncluded ? '1' : '0')
+
+      if (maintenanceIncluded && maintenanceResponsibility) {
+        fd.append('maintenance_responsibility', maintenanceResponsibility)
+      }
+
+      // Furnishing & Ejari
+      if (furnishingStatus) fd.append('furnishing_status', furnishingStatus)
+      if (ejariNumber) fd.append('ejari_number', ejariNumber)
+
+      // Files
+      if (contractPdf) fd.append('contract_pdf', contractPdf)
+      if (ejariCertificate) fd.append('ejari_certificate', ejariCertificate)
+
+      entryPhotos.forEach(photo => {
+        fd.append('entry_photos[]', photo)
+      })
+
+      // Payment schedules as JSON
+      if (paymentRows.length > 0) {
+        const schedules = paymentRows.map(row => ({
+          label: row.transactionType,
+          amount: row.amount,
+          due_date: row.paymentDate
+        }))
+
+        fd.append('payment_schedules', JSON.stringify(schedules))
+      }
+
+      await createTenancy(fd)
+      toast.success('Contract created successfully')
+      router.push(getLocalizedUrl('/contracts/list', locale as Locale))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to create contract')
+    } finally {
+      setSubmitting(false)
+    }
   }
-
-  const inventoryItems = propertyInventory[property] || []
 
   const renderStepContent = () => {
     switch (activeStep) {
@@ -317,12 +382,12 @@ const AddContract = () => {
                 select
                 fullWidth
                 label='Tenant'
-                value={tenant}
-                onChange={e => setTenant(e.target.value)}
+                value={tenantId}
+                onChange={e => setTenantId(e.target.value)}
               >
                 <MenuItem value=''>Select Tenant</MenuItem>
-                {tenants.map(t => (
-                  <MenuItem key={t} value={t}>{t}</MenuItem>
+                {tenantsList.map(t => (
+                  <MenuItem key={t.id} value={t.id}>{t.full_name}</MenuItem>
                 ))}
               </CustomTextField>
             </Grid>
@@ -331,15 +396,23 @@ const AddContract = () => {
                 select
                 fullWidth
                 label='Property (Long-term Only)'
-                value={property}
-                onChange={e => setProperty(e.target.value)}
+                value={propertyId}
+                onChange={e => setPropertyId(e.target.value)}
               >
                 <MenuItem value=''>Select Property</MenuItem>
-                {properties.map(p => (
-                  <MenuItem key={p} value={p}>{p}</MenuItem>
+                {propertiesList.map(p => (
+                  <MenuItem key={p.id} value={p.id}>{p.public_name}</MenuItem>
                 ))}
               </CustomTextField>
             </Grid>
+            {selectedProperty?.owner && (
+              <Grid size={{ xs: 12 }}>
+                <div className='flex items-center gap-2'>
+                  <Typography variant='body2' color='text.secondary'>Owner:</Typography>
+                  <Chip label={selectedProperty.owner.full_name} size='small' color='info' variant='tonal' />
+                </div>
+              </Grid>
+            )}
             <Grid size={{ xs: 12, md: 6 }}>
               <CustomTextField
                 fullWidth
@@ -382,8 +455,8 @@ const AddContract = () => {
                 onChange={e => setFrequency(e.target.value)}
               >
                 <MenuItem value=''>Select Frequency</MenuItem>
-                {frequencies.map(f => (
-                  <MenuItem key={f} value={f}>{f}</MenuItem>
+                {frequencyOptions.map(f => (
+                  <MenuItem key={f.value} value={f.value}>{f.label}</MenuItem>
                 ))}
               </CustomTextField>
             </Grid>
@@ -561,11 +634,11 @@ const AddContract = () => {
                 Furnishing status and property inventory
               </Typography>
             </Grid>
-            {property && (
+            {selectedProperty && (
               <Grid size={{ xs: 12 }}>
                 <div className='flex items-center gap-2'>
                   <Typography variant='body2' color='text.secondary'>Property:</Typography>
-                  <Chip label={property} size='small' color='primary' variant='tonal' />
+                  <Chip label={selectedProperty.public_name} size='small' color='primary' variant='tonal' />
                 </div>
               </Grid>
             )}
@@ -594,19 +667,19 @@ const AddContract = () => {
                       <tr>
                         <th>Item</th>
                         <th>Type</th>
-                        <th>Condition</th>
+                        <th>Brand</th>
                         <th>Room</th>
-                        <th>Qty</th>
+                        <th>Worth</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {inventoryItems.map((inv, i) => (
-                        <tr key={i}>
-                          <td><Typography variant='body2'>{inv.item}</Typography></td>
+                      {inventoryItems.map(inv => (
+                        <tr key={inv.id}>
+                          <td><Typography variant='body2'>{inv.name}</Typography></td>
                           <td><Typography variant='body2'>{inv.type}</Typography></td>
-                          <td><Typography variant='body2'>{inv.condition}</Typography></td>
-                          <td><Typography variant='body2'>{inv.room}</Typography></td>
-                          <td><Typography variant='body2'>{inv.qty}</Typography></td>
+                          <td><Typography variant='body2'>{inv.brand || '-'}</Typography></td>
+                          <td><Typography variant='body2'>{inv.room_assigned || '-'}</Typography></td>
+                          <td><Typography variant='body2'>{inv.current_worth ? `AED ${inv.current_worth.toLocaleString()}` : '-'}</Typography></td>
                         </tr>
                       ))}
                     </tbody>
@@ -614,7 +687,7 @@ const AddContract = () => {
                 </div>
               ) : (
                 <Typography variant='body2' color='text.secondary'>
-                  {property ? 'No inventory items for this property' : 'Select a property in Contract Details to view inventory'}
+                  {propertyId ? 'No inventory items for this property' : 'Select a property in Contract Details to view inventory'}
                 </Typography>
               )}
             </Grid>
@@ -634,7 +707,7 @@ const AddContract = () => {
               <Typography variant='subtitle1' className='font-medium mbe-2'>
                 Contract PDF
               </Typography>
-              <FileUpload label='Upload Contract PDF' accept='.pdf' />
+              <FileUpload label='Upload Contract PDF' accept='.pdf' onChange={file => setContractPdf(file)} />
             </Grid>
             <Grid size={{ xs: 12 }}>
               <Typography variant='subtitle1' className='font-medium mbe-2'>
@@ -652,7 +725,7 @@ const AddContract = () => {
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <FileUpload label='Upload Ejari Certificate' accept='.pdf,.jpg,.jpeg,.png' />
+                  <FileUpload label='Upload Ejari Certificate' accept='.pdf,.jpg,.jpeg,.png' onChange={file => setEjariCertificate(file)} />
                 </Grid>
               </Grid>
             </Grid>
@@ -873,9 +946,10 @@ const AddContract = () => {
               variant='contained'
               color='success'
               onClick={handleSubmit}
-              endIcon={<i className='tabler-check' />}
+              disabled={submitting}
+              endIcon={submitting ? <CircularProgress size={20} color='inherit' /> : <i className='tabler-check' />}
             >
-              Create Contract
+              {submitting ? 'Creating...' : 'Create Contract'}
             </Button>
           ) : (
             <Button
