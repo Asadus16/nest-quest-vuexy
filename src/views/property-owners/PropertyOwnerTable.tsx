@@ -37,15 +37,21 @@ import type { RankingInfo } from '@tanstack/match-sorter-utils'
 
 // Type Imports
 import type { OwnerInvitationType } from '@/types/apps/propertyOwnerTypes'
+import type { Locale } from '@configs/i18n'
+
+// Hook Imports
+import { useRole } from '@/contexts/roleContext'
 
 // Component Imports
 import InviteOwnerDrawer from './InviteOwnerDrawer'
 import TablePaginationComponent from '@components/TablePaginationComponent'
 import CustomTextField from '@core/components/mui/TextField'
 import CustomAvatar from '@core/components/mui/Avatar'
+import OptionMenu from '@core/components/option-menu'
 
 // Util Imports
 import { getInitials } from '@/utils/getInitials'
+import { getLocalizedUrl } from '@/utils/i18n'
 import { invitationStatusColors, invitationStatusLabels } from '@/utils/invitationStatusMap'
 
 // Style Imports
@@ -113,6 +119,7 @@ const PropertyOwnerTable = ({
   // Hooks
   const router = useRouter()
   const { lang: locale } = useParams()
+  const { role } = useRole()
 
   // States
   const [addOwnerOpen, setAddOwnerOpen] = useState(false)
@@ -211,16 +218,41 @@ const PropertyOwnerTable = ({
         header: 'Action',
         cell: ({ row }) => (
           <div className='flex items-center'>
-            <IconButton onClick={() => router.push(`/${locale}/view-owner/${row.original.id}`)}>
-              <i className='tabler-eye text-textSecondary' />
-            </IconButton>
+            <OptionMenu
+              iconButtonProps={{ size: 'medium' }}
+              iconClassName='text-textSecondary'
+              options={[
+                {
+                  text: 'View',
+                  icon: 'tabler-eye',
+                  menuItemProps: {
+                    onClick: () =>
+                      router.push(getLocalizedUrl(`/view-owner/${row.original.id}`, locale as Locale))
+                  }
+                },
+                ...(row.original.owner && role === 'property-manager'
+                  ? [
+                      {
+                        text: 'Show Properties',
+                        icon: 'tabler-building',
+                        menuItemProps: {
+                          onClick: () =>
+                            router.push(
+                              getLocalizedUrl(`/owner-properties/${row.original.owner!.id}`, locale as Locale)
+                            )
+                        }
+                      }
+                    ]
+                  : [])
+              ]}
+            />
           </div>
         ),
         enableSorting: false
       }
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [router, locale]
+    [router, locale, role]
   )
 
   const table = useReactTable({

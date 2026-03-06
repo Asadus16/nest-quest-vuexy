@@ -23,6 +23,8 @@ import { useRole } from '@/contexts/roleContext'
 
 // Service Imports
 import { getUnreadNoticeCount } from '@/services/tenancy'
+import { getOwnerInvitations } from '@/services/ownerManagerRequests'
+import { getTenantInvitations } from '@/services/tenantManagerRequests'
 
 // Styled Component Imports
 import StyledVerticalNavExpandIcon from '@menu/styles/vertical/StyledVerticalNavExpandIcon'
@@ -57,6 +59,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
   const params = useParams()
   const { role } = useRole()
   const [unreadCount, setUnreadCount] = useState(0)
+  const [pendingInvites, setPendingInvites] = useState(0)
 
   // Fetch unread notice count for tenant
   useEffect(() => {
@@ -65,6 +68,20 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
 
     getUnreadNoticeCount()
       .then(count => { if (mounted) setUnreadCount(count) })
+      .catch(() => {})
+
+    return () => { mounted = false }
+  }, [role])
+
+  // Fetch pending invite count for owner or tenant
+  useEffect(() => {
+    if (role !== 'property-owner' && role !== 'tenant') return
+    let mounted = true
+
+    const fetchInvites = role === 'tenant' ? getTenantInvitations : getOwnerInvitations
+
+    fetchInvites()
+      .then(invites => { if (mounted) setPendingInvites(invites.filter(i => i.status === 'PENDING').length) })
       .catch(() => {})
 
     return () => { mounted = false }
@@ -110,7 +127,29 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
             <MenuItem href={`/${locale}/contracts/list`} icon={<i className='tabler-file-text' />}>
               My Contracts
             </MenuItem>
-            <MenuItem href={`/${locale}/property-owners`} icon={<i className='tabler-home-hand' />}>
+            <MenuItem href={`/${locale}/owner/dashboard`} icon={<i className='tabler-chart-bar' />}>
+              Financial Dashboard
+            </MenuItem>
+            <MenuItem href={`/${locale}/owner/transactions`} icon={<i className='tabler-arrows-exchange' />}>
+              Transactions
+            </MenuItem>
+            <MenuItem
+              href={`/${locale}/property-owners`}
+              icon={<i className='tabler-home-hand' />}
+              suffix={
+                pendingInvites > 0 ? (
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--mui-palette-error-main)',
+                      display: 'inline-block'
+                    }}
+                  />
+                ) : undefined
+              }
+            >
               Property Managers
             </MenuItem>
             <MenuItem href={`/${locale}/profile`} icon={<i className='tabler-user' />}>
@@ -139,7 +178,23 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
             >
               My Contracts
             </MenuItem>
-            <MenuItem href={`/${locale}/manager-requests`} icon={<i className='tabler-mail' />}>
+            <MenuItem
+              href={`/${locale}/manager-requests`}
+              icon={<i className='tabler-mail' />}
+              suffix={
+                pendingInvites > 0 ? (
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--mui-palette-error-main)',
+                      display: 'inline-block'
+                    }}
+                  />
+                ) : undefined
+              }
+            >
               Invites
             </MenuItem>
           </MenuSection>

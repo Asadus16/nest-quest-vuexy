@@ -41,6 +41,11 @@ const ManagerProfile = ({ invitation, onRespond, responding }: Props) => {
               <Typography variant='body2' color='text.secondary'>
                 Property Manager
               </Typography>
+              {pm?.company_name && (
+                <Typography variant='body2' color='text.secondary'>
+                  {pm.company_name}
+                </Typography>
+              )}
             </div>
             <Chip
               label={invitationStatusLabels[invitation.status] || invitation.status}
@@ -50,6 +55,28 @@ const ManagerProfile = ({ invitation, onRespond, responding }: Props) => {
             />
           </div>
         </div>
+        {pm && (
+          <div className='flex justify-around'>
+            <div className='flex flex-col items-center'>
+              <Typography variant='h5'>{pm.properties_count ?? 0}</Typography>
+              <Typography variant='body2' color='text.secondary'>
+                Properties
+              </Typography>
+            </div>
+            <div className='flex flex-col items-center'>
+              <Typography variant='h5'>{pm.owners_count ?? 0}</Typography>
+              <Typography variant='body2' color='text.secondary'>
+                Owners
+              </Typography>
+            </div>
+            <div className='flex flex-col items-center'>
+              <Typography variant='h5'>{pm.tenancies_count ?? 0}</Typography>
+              <Typography variant='body2' color='text.secondary'>
+                Contracts
+              </Typography>
+            </div>
+          </div>
+        )}
         <div>
           <Typography variant='h5'>Contact</Typography>
           <Divider className='mlb-4' />

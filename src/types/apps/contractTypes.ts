@@ -7,6 +7,9 @@ export type TenancyPaymentScheduleType = {
   due_date: string
   status: string
   payment_method: string | null
+  received_by: string | null
+  notes: string | null
+  payment_date: string | null
   proof_of_payment: string | null
   paid_at: string | null
 }
@@ -104,6 +107,31 @@ export type PropertyDetailInContractType = {
   status: string | null
 }
 
+export type OwnerAgreementScheduleType = {
+  id: number
+  label: string
+  amount: number
+  currency: string
+  due_date: string
+  status: string
+  payment_method: string | null
+  proof_of_payment: string | null
+  paid_at: string | null
+}
+
+export type OwnerAgreementDetailType = {
+  id: number
+  agreement_type: 'PERCENTAGE' | 'FIXED_FEE' | 'SUBLEASE'
+  commission_percentage: number | null
+  inclusive_of_agency_fee: boolean
+  fixed_fee_amount: number | null
+  computed_commission: number | null
+  payout_amount: number | null
+  payout_frequency: string | null
+  currency: string
+  schedules: OwnerAgreementScheduleType[]
+}
+
 export type ContractType = {
   id: number
   property: { id: number; public_name: string } | null
@@ -119,10 +147,13 @@ export type ContractType = {
   agency_fee_amount: number | null
   utilities_included: boolean
   utilities: string[] | null
+  max_utilities_per_month: number | null
   maintenance_included: boolean
   maintenance_responsibility: string | null
+  maintenance_threshold: number | null
   furnishing_status: string | null
   ejari_number: string | null
+  owner_agreement_type: string | null
   status: string
   currency: string
   created_at: string
@@ -138,6 +169,7 @@ export type ContractDetailType = Omit<ContractType, 'property' | 'tenant' | 'own
   payment_schedules: TenancyPaymentScheduleType[]
   activity_logs: TenancyActivityLogType[]
   notices: TenancyNoticeType[]
+  owner_agreement: OwnerAgreementDetailType | null
 }
 
 export type ContractStatsType = {
@@ -150,6 +182,13 @@ export type ContractStatsType = {
 export type PaymentScheduleRow = {
   id: number
   transactionType: string
+  amount: string
+  paymentDate: string
+}
+
+export type OwnerAgreementScheduleRow = {
+  id: number
+  label: string
   amount: string
   paymentDate: string
 }

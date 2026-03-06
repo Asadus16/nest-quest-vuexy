@@ -6,6 +6,7 @@ import type {
   LinkedTenantType,
   TenancyNoticeType
 } from '@/types/apps/contractTypes'
+import type { TenantDashboardStatsType } from '@/types/apps/financialTypes'
 
 // PM endpoints
 export async function getTenancies(): Promise<ContractType[]> {
@@ -48,6 +49,17 @@ export async function markPaymentPaid(
     await apiFetchFormData(`/pm/tenancy-payments/${paymentId}/mark-paid`, formData)
   } else {
     await apiFetch(`/pm/tenancy-payments/${paymentId}/mark-paid`, { method: 'POST' })
+  }
+}
+
+export async function markOwnerSchedulePaid(
+  scheduleId: number,
+  formData?: FormData
+): Promise<void> {
+  if (formData) {
+    await apiFetchFormData(`/pm/owner-agreement-schedules/${scheduleId}/mark-paid`, formData)
+  } else {
+    await apiFetch(`/pm/owner-agreement-schedules/${scheduleId}/mark-paid`, { method: 'POST' })
   }
 }
 
@@ -99,4 +111,11 @@ export async function getUnreadNoticeCount(): Promise<number> {
 
 export async function markNoticeRead(noticeId: number): Promise<void> {
   await apiFetch(`/tenant/notices/${noticeId}/mark-read`, { method: 'POST' })
+}
+
+// Tenant financial endpoints
+export async function getTenantDashboardStats(): Promise<TenantDashboardStatsType> {
+  const res = await apiFetch<{ data: TenantDashboardStatsType }>('/tenant/dashboard-stats')
+
+  return res.data
 }

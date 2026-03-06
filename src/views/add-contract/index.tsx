@@ -29,7 +29,7 @@ import type { StepProps as MuiStepProps } from '@mui/material/Step'
 import classnames from 'classnames'
 
 // Type Imports
-import type { PaymentScheduleRow, LinkedTenantType } from '@/types/apps/contractTypes'
+import type { PaymentScheduleRow, OwnerAgreementScheduleRow, LinkedTenantType } from '@/types/apps/contractTypes'
 import type { PropertyType } from '@/types/apps/propertyTypes'
 import type { InventoryType } from '@/types/apps/inventoryTypes'
 import type { Locale } from '@configs/i18n'
@@ -111,11 +111,13 @@ const PhotoThumbnail = styled('div')(({ theme }) => ({
 
 // Step definitions
 const steps = [
+  { icon: 'tabler-building', title: 'Property Selection', subtitle: 'Choose property' },
+  { icon: 'tabler-contract', title: 'Owner Agreement', subtitle: 'PM & Owner terms' },
   { icon: 'tabler-file-text', title: 'Contract Details', subtitle: 'Tenant & rent info' },
   { icon: 'tabler-currency-dirham', title: 'Financial Details', subtitle: 'Deposits & fees' },
   { icon: 'tabler-bulb', title: 'Utilities', subtitle: 'Included utilities' },
   { icon: 'tabler-tool', title: 'Maintenance', subtitle: 'Responsibilities' },
-  { icon: 'tabler-building', title: 'Property Type', subtitle: 'Furnishing & inventory' },
+  { icon: 'tabler-sofa', title: 'Property Type', subtitle: 'Furnishing & inventory' },
   { icon: 'tabler-file-upload', title: 'Documents', subtitle: 'PDF & Ejari' },
   { icon: 'tabler-camera', title: 'Entry Photos', subtitle: 'Property photos' },
   { icon: 'tabler-calendar-dollar', title: 'Payment Schedule', subtitle: 'Payment rows' }
@@ -139,6 +141,12 @@ const utilitiesOptions = [
 ]
 
 const furnishingOptions = ['Furnished', 'Semi-Furnished', 'Unfurnished']
+
+const ownerAgreementTypes = [
+  { value: 'PERCENTAGE', label: 'Percentage Agreement' },
+  { value: 'FIXED_FEE', label: 'Fixed Fee' },
+  { value: 'SUBLEASE', label: 'Sublease from Owner' }
+]
 
 const transactionTypes = ['Rent', 'Security Deposit', 'Agency Fee']
 
@@ -189,6 +197,16 @@ const AddContract = () => {
     }
   }
 
+  // --- Section 0: Owner Agreement ---
+  const [ownerAgreementType, setOwnerAgreementType] = useState('')
+  const [commissionPercentage, setCommissionPercentage] = useState('')
+  const [inclusiveOfAgencyFee, setInclusiveOfAgencyFee] = useState(false)
+  const [fixedFeeAmount, setFixedFeeAmount] = useState('')
+  const [payoutAmount, setPayoutAmount] = useState('')
+  const [payoutFrequency, setPayoutFrequency] = useState('')
+  const [ownerScheduleRows, setOwnerScheduleRows] = useState<OwnerAgreementScheduleRow[]>([])
+  const [editingOwnerScheduleRow, setEditingOwnerScheduleRow] = useState<OwnerAgreementScheduleRow | null>(null)
+
   // --- Section 1: Contract Details ---
   const [tenantId, setTenantId] = useState('')
   const [propertyId, setPropertyId] = useState('')
@@ -220,10 +238,12 @@ const AddContract = () => {
   // --- Section 3: Utilities ---
   const [utilitiesIncluded, setUtilitiesIncluded] = useState(false)
   const [selectedUtilities, setSelectedUtilities] = useState<string[]>([])
+  const [maxUtilitiesPerMonth, setMaxUtilitiesPerMonth] = useState('')
 
   // --- Section 4: Maintenance ---
   const [maintenanceIncluded, setMaintenanceIncluded] = useState(false)
   const [maintenanceResponsibility, setMaintenanceResponsibility] = useState('')
+  const [maintenanceThreshold, setMaintenanceThreshold] = useState('')
 
   // --- Section 5: Property Type ---
   const [furnishingStatus, setFurnishingStatus] = useState('')
@@ -291,6 +311,30 @@ const AddContract = () => {
     setPaymentRows(prev => prev.filter(r => r.id !== id))
   }
 
+  const handleAddOwnerScheduleRow = () => {
+    setEditingOwnerScheduleRow({
+      id: Date.now(),
+      label: '',
+      amount: '',
+      paymentDate: ''
+    })
+  }
+
+  const handleConfirmOwnerScheduleRow = () => {
+    if (editingOwnerScheduleRow && editingOwnerScheduleRow.paymentDate && editingOwnerScheduleRow.amount) {
+      setOwnerScheduleRows(prev => [...prev, editingOwnerScheduleRow])
+      setEditingOwnerScheduleRow(null)
+    }
+  }
+
+  const handleCancelOwnerScheduleRow = () => {
+    setEditingOwnerScheduleRow(null)
+  }
+
+  const handleRemoveOwnerScheduleRow = (id: number) => {
+    setOwnerScheduleRows(prev => prev.filter(r => r.id !== id))
+  }
+
   const handleSubmit = async () => {
     if (!tenantId || !propertyId || !startDate || !endDate || !rentAmount || !frequency) return
 
@@ -326,11 +370,19 @@ const AddContract = () => {
         fd.append('utilities', JSON.stringify(selectedUtilities))
       }
 
+      if (utilitiesIncluded && maxUtilitiesPerMonth) {
+        fd.append('max_utilities_per_month', maxUtilitiesPerMonth)
+      }
+
       // Maintenance
       fd.append('maintenance_included', maintenanceIncluded ? '1' : '0')
 
       if (maintenanceIncluded && maintenanceResponsibility) {
         fd.append('maintenance_responsibility', maintenanceResponsibility)
+      }
+
+      if (maintenanceIncluded && maintenanceThreshold) {
+        fd.append('maintenance_threshold', maintenanceThreshold)
       }
 
       // Furnishing & Ejari
@@ -356,6 +408,31 @@ const AddContract = () => {
         fd.append('payment_schedules', JSON.stringify(schedules))
       }
 
+      // Owner agreement
+      if (ownerAgreementType) {
+        fd.append('owner_agreement_type', ownerAgreementType)
+
+        if (ownerAgreementType === 'PERCENTAGE') {
+          if (commissionPercentage) fd.append('commission_percentage', commissionPercentage)
+          fd.append('inclusive_of_agency_fee', inclusiveOfAgencyFee ? '1' : '0')
+        } else if (ownerAgreementType === 'FIXED_FEE') {
+          if (fixedFeeAmount) fd.append('fixed_fee_amount', fixedFeeAmount)
+        } else if (ownerAgreementType === 'SUBLEASE') {
+          if (payoutAmount) fd.append('payout_amount', payoutAmount)
+          if (payoutFrequency) fd.append('payout_frequency', payoutFrequency)
+        }
+
+        if (ownerScheduleRows.length > 0) {
+          const ownerSchedules = ownerScheduleRows.map(row => ({
+            label: `Payout ${row.paymentDate}`,
+            amount: row.amount,
+            due_date: row.paymentDate
+          }))
+
+          fd.append('owner_agreement_schedules', JSON.stringify(ownerSchedules))
+        }
+      }
+
       await createTenancy(fd)
       toast.success('Contract created successfully')
       router.push(getLocalizedUrl('/contracts/list', locale as Locale))
@@ -369,6 +446,231 @@ const AddContract = () => {
   const renderStepContent = () => {
     switch (activeStep) {
       case 0:
+        return (
+          <Grid container spacing={6}>
+            <Grid size={{ xs: 12 }}>
+              <Typography variant='h5'>Property Selection</Typography>
+              <Typography variant='body2' color='text.secondary'>
+                Select the property for this contract
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <CustomTextField
+                select
+                fullWidth
+                label='Property'
+                value={propertyId}
+                onChange={e => setPropertyId(e.target.value)}
+              >
+                <MenuItem value=''>Select Property</MenuItem>
+                {propertiesList.map(p => (
+                  <MenuItem key={p.id} value={p.id}>{p.public_name}</MenuItem>
+                ))}
+              </CustomTextField>
+            </Grid>
+            {selectedProperty?.owner && (
+              <Grid size={{ xs: 12 }}>
+                <div className='flex items-center gap-2'>
+                  <Typography variant='body2' color='text.secondary'>Owner:</Typography>
+                  <Chip label={selectedProperty.owner.full_name} size='small' color='info' variant='tonal' />
+                </div>
+              </Grid>
+            )}
+          </Grid>
+        )
+
+      case 1:
+        return (
+          <Grid container spacing={6}>
+            <Grid size={{ xs: 12 }}>
+              <Typography variant='h5'>Owner Agreement</Typography>
+              <Typography variant='body2' color='text.secondary'>
+                Define the agreement terms between PM and property owner
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <CustomTextField
+                select
+                fullWidth
+                label='Agreement Type'
+                value={ownerAgreementType}
+                onChange={e => {
+                  setOwnerAgreementType(e.target.value)
+                  setCommissionPercentage('')
+                  setInclusiveOfAgencyFee(false)
+                  setFixedFeeAmount('')
+                  setPayoutAmount('')
+                  setPayoutFrequency('')
+                  setOwnerScheduleRows([])
+                  setEditingOwnerScheduleRow(null)
+                }}
+              >
+                <MenuItem value=''>Select Agreement Type</MenuItem>
+                {ownerAgreementTypes.map(t => (
+                  <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>
+                ))}
+              </CustomTextField>
+            </Grid>
+            {ownerAgreementType === 'PERCENTAGE' && (
+              <>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <CustomTextField
+                    fullWidth
+                    label='Commission Percentage (%)'
+                    placeholder='e.g. 5'
+                    value={commissionPercentage}
+                    onChange={e => setCommissionPercentage(e.target.value.replace(/[^\d.]/g, ''))}
+                    slotProps={{
+                      htmlInput: { inputMode: 'decimal' },
+                      input: { endAdornment: <InputAdornment position='end'>%</InputAdornment> }
+                    }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={inclusiveOfAgencyFee}
+                        onChange={e => setInclusiveOfAgencyFee(e.target.checked)}
+                      />
+                    }
+                    label='Inclusive of Agency Fee'
+                  />
+                </Grid>
+              </>
+            )}
+            {ownerAgreementType === 'FIXED_FEE' && (
+              <Grid size={{ xs: 12, md: 6 }}>
+                <CustomTextField
+                  fullWidth
+                  label='Fixed Fee Amount (AED)'
+                  placeholder='e.g. 10000'
+                  value={fixedFeeAmount}
+                  onChange={e => setFixedFeeAmount(e.target.value.replace(/\D/g, ''))}
+                  slotProps={{
+                    htmlInput: { inputMode: 'numeric' },
+                    input: { startAdornment: <InputAdornment position='start'>AED</InputAdornment> }
+                  }}
+                />
+              </Grid>
+            )}
+            {ownerAgreementType === 'SUBLEASE' && (
+              <>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <CustomTextField
+                    fullWidth
+                    label='Owner Payout Amount (AED)'
+                    placeholder='e.g. 50000'
+                    value={payoutAmount}
+                    onChange={e => setPayoutAmount(e.target.value.replace(/\D/g, ''))}
+                    slotProps={{
+                      htmlInput: { inputMode: 'numeric' },
+                      input: { startAdornment: <InputAdornment position='start'>AED</InputAdornment> }
+                    }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <CustomTextField
+                    select
+                    fullWidth
+                    label='Payout Frequency'
+                    value={payoutFrequency}
+                    onChange={e => setPayoutFrequency(e.target.value)}
+                  >
+                    <MenuItem value=''>Select Frequency</MenuItem>
+                    {frequencyOptions.map(f => (
+                      <MenuItem key={f.value} value={f.value}>{f.label}</MenuItem>
+                    ))}
+                  </CustomTextField>
+                </Grid>
+              </>
+            )}
+            {(ownerAgreementType === 'PERCENTAGE' || ownerAgreementType === 'FIXED_FEE' || ownerAgreementType === 'SUBLEASE') && (
+              <>
+                <Grid size={{ xs: 12 }}>
+                  <Typography variant='subtitle1' className='font-medium'>
+                    {ownerAgreementType === 'SUBLEASE' ? 'Owner Payout Schedule' : 'Commission Payout Schedule'}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <Button
+                    variant='tonal'
+                    color='primary'
+                    startIcon={<i className='tabler-plus' />}
+                    onClick={handleAddOwnerScheduleRow}
+                    disabled={editingOwnerScheduleRow !== null}
+                  >
+                    Add Row
+                  </Button>
+                </Grid>
+                {(ownerScheduleRows.length > 0 || editingOwnerScheduleRow) && (
+                  <Grid size={{ xs: 12 }}>
+                    <div className='overflow-x-auto border rounded'>
+                      <table className={tableStyles.table}>
+                        <thead>
+                          <tr>
+                            <th>Due Date</th>
+                            <th>Amount (AED)</th>
+                            <th>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {ownerScheduleRows.map(row => (
+                            <tr key={row.id}>
+                              <td><Typography variant='body2'>{row.paymentDate}</Typography></td>
+                              <td><Typography variant='body2'>AED {Number(row.amount).toLocaleString()}</Typography></td>
+                              <td>
+                                <IconButton size='small' onClick={() => handleRemoveOwnerScheduleRow(row.id)}>
+                                  <i className='tabler-x text-textSecondary' />
+                                </IconButton>
+                              </td>
+                            </tr>
+                          ))}
+                          {editingOwnerScheduleRow && (
+                            <tr>
+                              <td>
+                                <CustomTextField
+                                  size='small'
+                                  fullWidth
+                                  type='date'
+                                  value={editingOwnerScheduleRow.paymentDate}
+                                  onChange={e => setEditingOwnerScheduleRow({ ...editingOwnerScheduleRow, paymentDate: e.target.value })}
+                                  slotProps={{ inputLabel: { shrink: true } }}
+                                />
+                              </td>
+                              <td>
+                                <CustomTextField
+                                  size='small'
+                                  fullWidth
+                                  placeholder='Amount'
+                                  value={editingOwnerScheduleRow.amount}
+                                  onChange={e => setEditingOwnerScheduleRow({ ...editingOwnerScheduleRow, amount: e.target.value.replace(/\D/g, '') })}
+                                  slotProps={{ htmlInput: { inputMode: 'numeric' } }}
+                                />
+                              </td>
+                              <td>
+                                <div className='flex items-center'>
+                                  <IconButton size='small' color='success' onClick={handleConfirmOwnerScheduleRow}>
+                                    <i className='tabler-plus' />
+                                  </IconButton>
+                                  <IconButton size='small' color='error' onClick={handleCancelOwnerScheduleRow}>
+                                    <i className='tabler-x' />
+                                  </IconButton>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </Grid>
+                )}
+              </>
+            )}
+          </Grid>
+        )
+
+      case 2:
         return (
           <Grid container spacing={6}>
             <Grid size={{ xs: 12 }}>
@@ -391,28 +693,6 @@ const AddContract = () => {
                 ))}
               </CustomTextField>
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <CustomTextField
-                select
-                fullWidth
-                label='Property (Long-term Only)'
-                value={propertyId}
-                onChange={e => setPropertyId(e.target.value)}
-              >
-                <MenuItem value=''>Select Property</MenuItem>
-                {propertiesList.map(p => (
-                  <MenuItem key={p.id} value={p.id}>{p.public_name}</MenuItem>
-                ))}
-              </CustomTextField>
-            </Grid>
-            {selectedProperty?.owner && (
-              <Grid size={{ xs: 12 }}>
-                <div className='flex items-center gap-2'>
-                  <Typography variant='body2' color='text.secondary'>Owner:</Typography>
-                  <Chip label={selectedProperty.owner.full_name} size='small' color='info' variant='tonal' />
-                </div>
-              </Grid>
-            )}
             <Grid size={{ xs: 12, md: 6 }}>
               <CustomTextField
                 fullWidth
@@ -463,7 +743,7 @@ const AddContract = () => {
           </Grid>
         )
 
-      case 1:
+      case 3:
         return (
           <Grid container spacing={6}>
             <Grid size={{ xs: 12 }}>
@@ -533,7 +813,7 @@ const AddContract = () => {
           </Grid>
         )
 
-      case 2:
+      case 4:
         return (
           <Grid container spacing={6}>
             <Grid size={{ xs: 12 }}>
@@ -550,7 +830,10 @@ const AddContract = () => {
                     onChange={e => {
                       setUtilitiesIncluded(e.target.checked)
 
-                      if (!e.target.checked) setSelectedUtilities([])
+                      if (!e.target.checked) {
+                        setSelectedUtilities([])
+                        setMaxUtilitiesPerMonth('')
+                      }
                     }}
                   />
                 }
@@ -558,31 +841,47 @@ const AddContract = () => {
               />
             </Grid>
             {utilitiesIncluded && (
-              <Grid size={{ xs: 12 }}>
-                <Typography variant='body2' className='font-medium mbe-2'>
-                  Utilities Checklist
-                </Typography>
-                <div className='flex flex-wrap gap-x-6 gap-y-2'>
-                  {utilitiesOptions.map(utility => (
-                    <FormControlLabel
-                      key={utility}
-                      control={
-                        <Checkbox
-                          size='small'
-                          checked={selectedUtilities.includes(utility)}
-                          onChange={() => handleUtilityToggle(utility)}
-                        />
-                      }
-                      label={utility}
-                    />
-                  ))}
-                </div>
-              </Grid>
+              <>
+                <Grid size={{ xs: 12 }}>
+                  <Typography variant='body2' className='font-medium mbe-2'>
+                    Utilities Checklist
+                  </Typography>
+                  <div className='flex flex-wrap gap-x-6 gap-y-2'>
+                    {utilitiesOptions.map(utility => (
+                      <FormControlLabel
+                        key={utility}
+                        control={
+                          <Checkbox
+                            size='small'
+                            checked={selectedUtilities.includes(utility)}
+                            onChange={() => handleUtilityToggle(utility)}
+                          />
+                        }
+                        label={utility}
+                      />
+                    ))}
+                  </div>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <CustomTextField
+                    fullWidth
+                    label='Maximum Total Utilities Per Month'
+                    placeholder='e.g. 1500'
+                    value={maxUtilitiesPerMonth}
+                    onChange={e => setMaxUtilitiesPerMonth(e.target.value.replace(/\D/g, ''))}
+                    slotProps={{
+                      htmlInput: { inputMode: 'numeric' },
+                      input: { startAdornment: <InputAdornment position='start'>AED</InputAdornment> }
+                    }}
+                    helperText='Bills at or below this amount are covered. Any excess is paid by the tenant.'
+                  />
+                </Grid>
+              </>
             )}
           </Grid>
         )
 
-      case 3:
+      case 5:
         return (
           <Grid container spacing={6}>
             <Grid size={{ xs: 12 }}>
@@ -599,7 +898,10 @@ const AddContract = () => {
                     onChange={e => {
                       setMaintenanceIncluded(e.target.checked)
 
-                      if (!e.target.checked) setMaintenanceResponsibility('')
+                      if (!e.target.checked) {
+                        setMaintenanceResponsibility('')
+                        setMaintenanceThreshold('')
+                      }
                     }}
                   />
                 }
@@ -607,25 +909,40 @@ const AddContract = () => {
               />
             </Grid>
             {maintenanceIncluded && (
-              <Grid size={{ xs: 12, md: 6 }}>
-                <CustomTextField
-                  select
-                  fullWidth
-                  label='Maintenance Responsibility'
-                  value={maintenanceResponsibility}
-                  onChange={e => setMaintenanceResponsibility(e.target.value)}
-                >
-                  <MenuItem value=''>Select Responsibility</MenuItem>
-                  <MenuItem value='Responsibility of Owner'>Responsibility of Owner</MenuItem>
-                  <MenuItem value='Responsibility of Tenant'>Responsibility of Tenant</MenuItem>
-                  <MenuItem value='Responsibility of Property Manager'>Responsibility of Property Manager</MenuItem>
-                </CustomTextField>
-              </Grid>
+              <>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <CustomTextField
+                    select
+                    fullWidth
+                    label='Maintenance Responsibility'
+                    value={maintenanceResponsibility}
+                    onChange={e => setMaintenanceResponsibility(e.target.value)}
+                  >
+                    <MenuItem value=''>Select Responsibility</MenuItem>
+                    <MenuItem value='Responsibility of Owner'>Responsibility of Owner</MenuItem>
+                    <MenuItem value='Responsibility of Tenant'>Responsibility of Tenant</MenuItem>
+                    <MenuItem value='Responsibility of Property Manager'>Responsibility of Property Manager</MenuItem>
+                  </CustomTextField>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <CustomTextField
+                    fullWidth
+                    label='Minimum Threshold (AED)'
+                    placeholder='e.g. 500'
+                    value={maintenanceThreshold}
+                    onChange={e => setMaintenanceThreshold(e.target.value.replace(/\D/g, ''))}
+                    slotProps={{
+                      htmlInput: { inputMode: 'numeric' },
+                      input: { startAdornment: <InputAdornment position='start'>AED</InputAdornment> }
+                    }}
+                  />
+                </Grid>
+              </>
             )}
           </Grid>
         )
 
-      case 4:
+      case 6:
         return (
           <Grid container spacing={6}>
             <Grid size={{ xs: 12 }}>
@@ -694,7 +1011,7 @@ const AddContract = () => {
           </Grid>
         )
 
-      case 5:
+      case 7:
         return (
           <Grid container spacing={6}>
             <Grid size={{ xs: 12 }}>
@@ -732,7 +1049,7 @@ const AddContract = () => {
           </Grid>
         )
 
-      case 6:
+      case 8:
         return (
           <Grid container spacing={6}>
             <Grid size={{ xs: 12 }}>
@@ -782,7 +1099,7 @@ const AddContract = () => {
           </Grid>
         )
 
-      case 7:
+      case 9:
         return (
           <Grid container spacing={6}>
             <Grid size={{ xs: 12 }}>

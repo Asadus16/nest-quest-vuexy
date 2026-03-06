@@ -14,7 +14,15 @@ import Badge from '@mui/material/Badge'
 // Component Imports
 import CustomTabList from '@core/components/mui/TabList'
 
-const ContractRight = ({ tabContentList, unreadNotices = 0 }: { tabContentList: { [key: string]: ReactElement }; unreadNotices?: number }) => {
+const ContractRight = ({
+  tabContentList,
+  unreadNotices = 0,
+  showOwnerSchedule = false
+}: {
+  tabContentList: { [key: string]: ReactElement }
+  unreadNotices?: number
+  showOwnerSchedule?: boolean
+}) => {
   const [activeTab, setActiveTab] = useState('overview')
 
   const handleChange = (event: SyntheticEvent, value: string) => {
@@ -35,6 +43,14 @@ const ContractRight = ({ tabContentList, unreadNotices = 0 }: { tabContentList: 
               label='Payment Schedule'
               iconPosition='start'
             />
+            {showOwnerSchedule && (
+              <Tab
+                icon={<i className='tabler-handshake' />}
+                value='owner-schedule'
+                label='Owner Payouts'
+                iconPosition='start'
+              />
+            )}
             <Tab
               icon={
                 <Badge variant='dot' color='error' invisible={unreadNotices === 0}>

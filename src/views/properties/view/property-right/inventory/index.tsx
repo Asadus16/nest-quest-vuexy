@@ -105,6 +105,7 @@ const InventoryTab = ({ propertyId }: { propertyId: number }) => {
               <th>Type</th>
               <th>Room</th>
               <th>Worth</th>
+              <th>Ownership</th>
               <th>Warranty</th>
             </tr>
           </thead>
@@ -146,6 +147,15 @@ const InventoryTab = ({ propertyId }: { propertyId: number }) => {
                   <td>
                     <Typography>
                       {item.current_worth ? `AED ${item.current_worth.toLocaleString()}` : '-'}
+                    </Typography>
+                  </td>
+                  <td>
+                    <Typography>
+                      {item.owned_by === 'PROPERTY_MANAGER'
+                        ? 'PM'
+                        : item.owned_by === 'PROPERTY_OWNER'
+                          ? 'PO'
+                          : '-'}
                     </Typography>
                   </td>
                   <td>

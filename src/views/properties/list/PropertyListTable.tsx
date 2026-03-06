@@ -229,18 +229,6 @@ const PropertyListTable = () => {
           </div>
         )
       }),
-      columnHelper.accessor('city', {
-        header: 'City',
-        cell: ({ row }) => <Typography>{row.original.city}</Typography>
-      }),
-      columnHelper.accessor('bedrooms', {
-        header: 'Beds',
-        cell: ({ row }) => <Typography>{row.original.bedrooms === 0 ? 'Studio' : row.original.bedrooms}</Typography>
-      }),
-      columnHelper.accessor('area_sqft', {
-        header: 'Area (Sq Ft)',
-        cell: ({ row }) => <Typography>{Number(row.original.area_sqft).toLocaleString()}</Typography>
-      }),
       columnHelper.accessor('monthly_rent', {
         header: 'Rent',
         cell: ({ row }) => (

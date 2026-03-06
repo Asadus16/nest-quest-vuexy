@@ -37,10 +37,20 @@ export type TenantInvitationType = {
     passport_copy_url: string | null
     company_name: string | null
     company_email: string | null
+    company_address: string | null
+    company_city: string | null
+    company_area: string | null
     company_logo_url: string | null
     trade_license_number: string | null
     trade_license_expiry: string | null
     trade_license_url: string | null
+    bank_name: string | null
+    bank_branch: string | null
+    account_number: string | null
+    iban: string | null
+    properties_count: number
+    owners_count: number
+    tenancies_count: number
     user?: {
       email: string
       phone: string | null

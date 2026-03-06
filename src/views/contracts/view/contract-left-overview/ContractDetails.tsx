@@ -1,3 +1,7 @@
+// Next Imports
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
+
 // MUI Imports
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -7,10 +11,17 @@ import Divider from '@mui/material/Divider'
 import Button from '@mui/material/Button'
 
 // Type Imports
+import type { Locale } from '@configs/i18n'
 import type { ContractDetailType } from '@/types/apps/contractTypes'
+
+// Hook Imports
+import { useRole } from '@/contexts/roleContext'
 
 // Component Imports
 import CustomAvatar from '@core/components/mui/Avatar'
+
+// Util Imports
+import { getLocalizedUrl } from '@/utils/i18n'
 
 const statusColor: Record<string, 'success' | 'error' | 'warning' | 'secondary'> = {
   ACTIVE: 'success',
@@ -34,6 +45,9 @@ const frequencyLabels: Record<string, string> = {
 }
 
 const ContractDetails = ({ contract }: { contract: ContractDetailType }) => {
+  const { role } = useRole()
+  const { lang: locale } = useParams()
+
   return (
     <Card>
       <CardContent className='flex flex-col pbs-12 gap-6'>
@@ -128,6 +142,18 @@ const ContractDetails = ({ contract }: { contract: ContractDetailType }) => {
             )}
           </div>
         </div>
+        {role === 'property-manager' && (
+          <Button
+            variant='contained'
+            color='info'
+            component={Link}
+            href={getLocalizedUrl(`/contract-financials/${contract.id}`, locale as Locale)}
+            startIcon={<i className='tabler-report-money' />}
+            fullWidth
+          >
+            View Financials
+          </Button>
+        )}
         <div className='flex gap-4 justify-center'>
           <Button variant='contained' color='primary' startIcon={<i className='tabler-edit' />}>
             Edit

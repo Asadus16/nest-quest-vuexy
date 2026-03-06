@@ -29,6 +29,8 @@ import ManagerRight from './manager-right'
 
 const PersonalDetailsTab = dynamic(() => import('./manager-right/personal-details'))
 const LegalDocumentsTab = dynamic(() => import('./manager-right/legal-documents'))
+const CompanyInfoTab = dynamic(() => import('./manager-right/company-info'))
+const BankingDetailsTab = dynamic(() => import('./manager-right/banking-details'))
 
 const ViewManagerPage = () => {
   const params = useParams()
@@ -91,6 +93,8 @@ const ViewManagerPage = () => {
 
   const tabContentList: { [key: string]: ReactElement } = {
     'personal-details': <PersonalDetailsTab invitation={invitation} />,
+    'company-info': <CompanyInfoTab invitation={invitation} />,
+    'banking-details': <BankingDetailsTab invitation={invitation} />,
     'legal-documents': <LegalDocumentsTab invitation={invitation} />
   }
 

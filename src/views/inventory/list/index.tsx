@@ -24,7 +24,14 @@ const InventoryList = () => {
     total_items: 0,
     total_worth: 0,
     under_warranty: 0,
-    warranty_expired: 0
+    warranty_expired: 0,
+    pm_owned: 0,
+    po_owned: 0,
+    condition_new: 0,
+    condition_good: 0,
+    condition_fair: 0,
+    condition_poor: 0,
+    condition_damaged: 0
   })
 
   const fetchData = useCallback(async () => {

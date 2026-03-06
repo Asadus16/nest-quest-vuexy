@@ -12,6 +12,7 @@ import TotalEarning from '@views/dashboards/analytics/TotalEarning'
 import MonthlyCampaignState from '@views/dashboards/analytics/MonthlyCampaignState'
 import SourceVisits from '@views/dashboards/analytics/SourceVisits'
 import ProjectsTable from '@views/dashboards/analytics/ProjectsTable'
+import RoleDashboard from '@views/dashboards/RoleDashboard'
 
 // Data Imports
 import { getProfileData } from '@/app/server/actions'
@@ -20,7 +21,7 @@ const DashboardAnalytics = async () => {
   // Vars
   const data = await getProfileData()
 
-  return (
+  const pmDashboard = (
     <Grid container spacing={6}>
       <Grid size={{ xs: 12, lg: 6 }}>
         <WebsiteAnalyticsSlider />
@@ -54,6 +55,8 @@ const DashboardAnalytics = async () => {
       </Grid>
     </Grid>
   )
+
+  return <RoleDashboard pmDashboard={pmDashboard} />
 }
 
 export default DashboardAnalytics

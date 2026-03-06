@@ -8,12 +8,14 @@ import type { UserRole } from '@/types/userTypes'
 export const roleRoutes: Record<UserRole, string[]> = {
   'property-manager': [
     '/property-owners',
+    '/owner-properties',
     '/properties',
     '/add-property',
     '/inventory',
     '/contracts',
     '/add-contract',
     '/view-contract',
+    '/contract-financials',
     '/view-owner',
     '/dashboards',
     '/reviews',
@@ -37,6 +39,8 @@ export const roleRoutes: Record<UserRole, string[]> = {
   'property-owner': [
     '/dashboards',
     '/owner/properties',
+    '/owner/dashboard',
+    '/owner/transactions',
     '/properties/view',
     '/contracts',
     '/view-contract',
