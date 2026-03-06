@@ -158,7 +158,7 @@ const StepAgreement = ({ activeStep, handleNext, handlePrev, formData, setFormDa
           <Grid size={{ xs: 12, md: 6 }}>
             <CustomTextField
               fullWidth
-              label='Rent Amount (AED)'
+              label='Total Rent (AED)'
               placeholder='e.g. 80000'
               value={formData.rentAmount}
               onChange={e => updateField('rentAmount', e.target.value.replace(/\D/g, ''))}

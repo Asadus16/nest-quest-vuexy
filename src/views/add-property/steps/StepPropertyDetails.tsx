@@ -10,9 +10,15 @@ import Switch from '@mui/material/Switch'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Divider from '@mui/material/Divider'
 
+// Next Imports
+import dynamic from 'next/dynamic'
+
 // Component Imports
 import CustomTextField from '@core/components/mui/TextField'
 import DirectionalIcon from '@components/DirectionalIcon'
+
+// Dynamically import map to avoid SSR issues with Leaflet
+const LocationPickerMap = dynamic(() => import('@components/LocationPickerMap'), { ssr: false })
 
 // Type Imports
 import type { StepProps } from '../types'
@@ -362,22 +368,21 @@ const StepPropertyDetails = ({ activeStep, handleNext, handlePrev, formData, set
           onChange={e => updateField('area', e.target.value)}
         />
       </Grid>
-      <Grid size={{ xs: 12, md: 4 }}>
-        <CustomTextField
-          fullWidth
-          label='Latitude'
-          placeholder='e.g. 25.2048'
-          value={formData.latitude}
-          onChange={e => updateField('latitude', e.target.value)}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, md: 4 }}>
-        <CustomTextField
-          fullWidth
-          label='Longitude'
-          placeholder='e.g. 55.2708'
-          value={formData.longitude}
-          onChange={e => updateField('longitude', e.target.value)}
+      {/* ── Location Map ── */}
+      <Grid size={{ xs: 12 }}>
+        <Divider />
+        <Typography variant='subtitle1' className='font-medium mbs-4 mbe-2'>
+          Pin Location
+        </Typography>
+        <Typography variant='body2' color='text.secondary' className='mbe-3'>
+          Search for an area and click on the map to set the exact property location
+        </Typography>
+        <LocationPickerMap
+          latitude={formData.latitude}
+          longitude={formData.longitude}
+          onLocationChange={(lat, lng) => {
+            setFormData({ ...formData, latitude: lat, longitude: lng })
+          }}
         />
       </Grid>
 

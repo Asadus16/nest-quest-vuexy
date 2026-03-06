@@ -193,6 +193,20 @@ const ViewInventoryPage = () => {
                       value={item.current_worth ? `AED ${item.current_worth.toLocaleString()}` : null}
                     />
                   </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <DetailRow
+                      icon='tabler-user-check'
+                      label='Owned By'
+                      value={item.owned_by === 'PROPERTY_MANAGER' ? 'Property Manager' : item.owned_by === 'PROPERTY_OWNER' ? 'Property Owner' : null}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <DetailRow
+                      icon='tabler-clipboard-check'
+                      label='Condition'
+                      value={item.condition ? item.condition.charAt(0) + item.condition.slice(1).toLowerCase() : null}
+                    />
+                  </Grid>
                 </Grid>
               </CardContent>
             </Card>

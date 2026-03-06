@@ -12,6 +12,8 @@ import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
 import InputAdornment from '@mui/material/InputAdornment'
 import Alert from '@mui/material/Alert'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Switch from '@mui/material/Switch'
 
 // Third-party Imports
 import { useForm, Controller } from 'react-hook-form'
@@ -44,6 +46,8 @@ type FormDataType = {
   warrantyStart: string
   warrantyEnd: string
   propertyId: string
+  ownedBy: string
+  condition: string
   notes: string
 }
 
@@ -73,6 +77,16 @@ const rooms = [
   'Dining Room'
 ]
 
+const conditions = ['NEW', 'GOOD', 'FAIR', 'POOR', 'DAMAGED']
+
+const conditionLabels: Record<string, string> = {
+  NEW: 'New',
+  GOOD: 'Good',
+  FAIR: 'Fair',
+  POOR: 'Poor',
+  DAMAGED: 'Damaged'
+}
+
 const defaultValues: FormDataType = {
   name: '',
   description: '',
@@ -84,6 +98,8 @@ const defaultValues: FormDataType = {
   warrantyStart: '',
   warrantyEnd: '',
   propertyId: '',
+  ownedBy: '',
+  condition: '',
   notes: ''
 }
 
@@ -93,6 +109,7 @@ const AddInventoryDrawer = (props: Props) => {
 
   // States
   const [photo, setPhoto] = useState<File | null>(null)
+  const [hasWarranty, setHasWarranty] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [properties, setProperties] = useState<PropertyType[]>([])
@@ -102,6 +119,7 @@ const AddInventoryDrawer = (props: Props) => {
     control,
     reset: resetForm,
     handleSubmit,
+    setValue,
     formState: { errors }
   } = useForm<FormDataType>({ defaultValues })
 
@@ -128,9 +146,15 @@ const AddInventoryDrawer = (props: Props) => {
       if (data.brand) fd.append('brand', data.brand)
       if (data.serialNumber) fd.append('serial_number', data.serialNumber)
       if (data.currentWorth) fd.append('current_worth', data.currentWorth)
-      if (data.warrantyStart) fd.append('warranty_start', data.warrantyStart)
-      if (data.warrantyEnd) fd.append('warranty_end', data.warrantyEnd)
+
+      if (hasWarranty) {
+        if (data.warrantyStart) fd.append('warranty_start', data.warrantyStart)
+        if (data.warrantyEnd) fd.append('warranty_end', data.warrantyEnd)
+      }
+
       if (data.propertyId) fd.append('property_id', data.propertyId)
+      if (data.ownedBy) fd.append('owned_by', data.ownedBy)
+      if (data.condition) fd.append('condition', data.condition)
       if (data.notes) fd.append('notes', data.notes)
       if (photo) fd.append('photo', photo)
 
@@ -148,6 +172,7 @@ const AddInventoryDrawer = (props: Props) => {
     handleClose()
     resetForm(defaultValues)
     setPhoto(null)
+    setHasWarranty(false)
     setError(null)
   }
 
@@ -266,30 +291,75 @@ const AddInventoryDrawer = (props: Props) => {
               />
             )}
           />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={hasWarranty}
+                onChange={e => {
+                  setHasWarranty(e.target.checked)
+
+                  if (!e.target.checked) {
+                    setValue('warrantyStart', '')
+                    setValue('warrantyEnd', '')
+                  }
+                }}
+              />
+            }
+            label='Has Warranty'
+          />
+          {hasWarranty && (
+            <>
+              <Controller
+                name='warrantyStart'
+                control={control}
+                render={({ field }) => (
+                  <CustomTextField
+                    {...field}
+                    fullWidth
+                    type='date'
+                    label='Warranty Start'
+                    slotProps={{ inputLabel: { shrink: true } }}
+                  />
+                )}
+              />
+              <Controller
+                name='warrantyEnd'
+                control={control}
+                render={({ field }) => (
+                  <CustomTextField
+                    {...field}
+                    fullWidth
+                    type='date'
+                    label='Warranty End'
+                    slotProps={{ inputLabel: { shrink: true } }}
+                  />
+                )}
+              />
+            </>
+          )}
           <Controller
-            name='warrantyStart'
+            name='ownedBy'
             control={control}
             render={({ field }) => (
-              <CustomTextField
-                {...field}
-                fullWidth
-                type='date'
-                label='Warranty Start'
-                slotProps={{ inputLabel: { shrink: true } }}
-              />
+              <CustomTextField select fullWidth label='Owned By' {...field}>
+                <MenuItem value=''>Select Owner</MenuItem>
+                <MenuItem value='PROPERTY_MANAGER'>Property Manager</MenuItem>
+                <MenuItem value='PROPERTY_OWNER'>Property Owner</MenuItem>
+              </CustomTextField>
             )}
           />
           <Controller
-            name='warrantyEnd'
+            name='condition'
             control={control}
             render={({ field }) => (
-              <CustomTextField
-                {...field}
-                fullWidth
-                type='date'
-                label='Warranty End'
-                slotProps={{ inputLabel: { shrink: true } }}
-              />
+              <CustomTextField select fullWidth label='Condition' {...field}>
+                <MenuItem value=''>Select Condition</MenuItem>
+                {conditions.map(c => (
+                  <MenuItem key={c} value={c}>
+                    {conditionLabels[c]}
+                  </MenuItem>
+                ))}
+              </CustomTextField>
             )}
           />
           <Controller

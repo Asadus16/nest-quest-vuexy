@@ -258,8 +258,9 @@ const StepPreview = ({ activeStep, handlePrev, formData }: StepProps) => {
         <InfoRow label='City' value={formData.city} />
         <InfoRow label='Zip Code' value={formData.zipCode} />
         <InfoRow label='Area' value={formData.area} />
-        <InfoRow label='Latitude' value={formData.latitude} />
-        <InfoRow label='Longitude' value={formData.longitude} />
+        {formData.latitude && formData.longitude && (
+          <InfoRow label='Location' value={`${formData.latitude}, ${formData.longitude}`} />
+        )}
       </Grid>
 
       {/* Parking */}

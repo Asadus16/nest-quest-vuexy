@@ -61,6 +61,9 @@ const PaymentScheduleTab = ({ contract, onRefresh }: { contract: ContractDetailT
   const [markPaidOpen, setMarkPaidOpen] = useState(false)
   const [selectedPayment, setSelectedPayment] = useState<TenancyPaymentScheduleType | null>(null)
   const [paymentMethod, setPaymentMethod] = useState('')
+  const [receivedBy, setReceivedBy] = useState('')
+  const [paymentDate, setPaymentDate] = useState('')
+  const [notes, setNotes] = useState('')
   const [proofFile, setProofFile] = useState<File | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -73,6 +76,9 @@ const PaymentScheduleTab = ({ contract, onRefresh }: { contract: ContractDetailT
   const handleOpenMarkPaid = (payment: TenancyPaymentScheduleType) => {
     setSelectedPayment(payment)
     setPaymentMethod('')
+    setReceivedBy('Manager')
+    setPaymentDate(new Date().toISOString().split('T')[0])
+    setNotes('')
     setProofFile(null)
     setMarkPaidOpen(true)
   }
@@ -86,6 +92,9 @@ const PaymentScheduleTab = ({ contract, onRefresh }: { contract: ContractDetailT
       const fd = new FormData()
 
       if (paymentMethod) fd.append('payment_method', paymentMethod)
+      if (receivedBy) fd.append('received_by', receivedBy)
+      if (paymentDate) fd.append('payment_date', paymentDate)
+      if (notes.trim()) fd.append('notes', notes.trim())
       if (proofFile) fd.append('proof_of_payment', proofFile)
 
       await markPaymentPaid(selectedPayment.id, fd)
@@ -178,6 +187,11 @@ const PaymentScheduleTab = ({ contract, onRefresh }: { contract: ContractDetailT
                             via {row.payment_method.replace('_', ' ')}
                           </Typography>
                         )}
+                        {row.received_by && (
+                          <Typography variant='caption' color='text.secondary' className='block'>
+                            Received by: {row.received_by}
+                          </Typography>
+                        )}
                       </td>
                       <td><Typography className='font-medium'>AED {row.amount.toLocaleString()}</Typography></td>
                       <td>
@@ -248,6 +262,33 @@ const PaymentScheduleTab = ({ contract, onRefresh }: { contract: ContractDetailT
             <MenuItem value='BANK_TRANSFER'>Bank Transfer</MenuItem>
             <MenuItem value='POSTDATED_CHECK'>Postdated Check</MenuItem>
           </CustomTextField>
+          <CustomTextField
+            select
+            fullWidth
+            label='Received By'
+            value={receivedBy}
+            onChange={e => setReceivedBy(e.target.value)}
+          >
+            <MenuItem value='Property Owner'>Property Owner</MenuItem>
+            <MenuItem value='Manager'>Manager</MenuItem>
+          </CustomTextField>
+          <CustomTextField
+            fullWidth
+            type='date'
+            label='Payment Date'
+            value={paymentDate}
+            onChange={e => setPaymentDate(e.target.value)}
+            slotProps={{ inputLabel: { shrink: true } }}
+          />
+          <CustomTextField
+            fullWidth
+            multiline
+            rows={3}
+            label='Notes (optional)'
+            placeholder='Add any notes about this payment...'
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+          />
           <div>
             <Typography variant='body2' className='mbe-1'>Proof of Payment (optional)</Typography>
             <input

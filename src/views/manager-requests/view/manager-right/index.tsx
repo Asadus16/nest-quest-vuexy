@@ -32,6 +32,18 @@ const ManagerRight = ({ tabContentList }: { tabContentList: { [key: string]: Rea
               iconPosition='start'
             />
             <Tab
+              icon={<i className='tabler-building' />}
+              value='company-info'
+              label='Company'
+              iconPosition='start'
+            />
+            <Tab
+              icon={<i className='tabler-building-bank' />}
+              value='banking-details'
+              label='Banking'
+              iconPosition='start'
+            />
+            <Tab
               icon={<i className='tabler-file-text' />}
               value='legal-documents'
               label='Legal Documents'

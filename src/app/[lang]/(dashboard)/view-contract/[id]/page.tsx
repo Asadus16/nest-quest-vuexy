@@ -32,6 +32,7 @@ const PhotosTab = dynamic(() => import('@views/contracts/view/contract-right/pho
 const PaymentScheduleTab = dynamic(() => import('@views/contracts/view/contract-right/payment-schedule'))
 const ActivityTab = dynamic(() => import('@views/contracts/view/contract-right/activity'))
 const NoticesTab = dynamic(() => import('@views/contracts/view/contract-right/notices'))
+const OwnerAgreementScheduleTab = dynamic(() => import('@views/contracts/view/contract-right/owner-agreement-schedule'))
 
 const ViewContractPage = () => {
   const { id } = useParams()
@@ -90,14 +91,27 @@ const ViewContractPage = () => {
     )
   }
 
-  const tabContentList = (): { [key: string]: ReactElement } => ({
-    overview: <OverviewTab contract={contract} />,
-    documents: <DocumentsTab contract={contract} />,
-    photos: <PhotosTab contract={contract} />,
-    'payment-schedule': <PaymentScheduleTab contract={contract} onRefresh={fetchContract} />,
-    notices: <NoticesTab contract={contract} onRefresh={fetchContract} />,
-    activity: <ActivityTab contract={contract} />
-  })
+  const hasOwnerSchedule =
+    role !== 'tenant' &&
+    contract.owner_agreement &&
+    contract.owner_agreement.schedules.length > 0
+
+  const tabContentList = (): { [key: string]: ReactElement } => {
+    const list: { [key: string]: ReactElement } = {
+      overview: <OverviewTab contract={contract} />,
+      documents: <DocumentsTab contract={contract} />,
+      photos: <PhotosTab contract={contract} />,
+      'payment-schedule': <PaymentScheduleTab contract={contract} onRefresh={fetchContract} />,
+      notices: <NoticesTab contract={contract} onRefresh={fetchContract} />,
+      activity: <ActivityTab contract={contract} />
+    }
+
+    if (hasOwnerSchedule) {
+      list['owner-schedule'] = <OwnerAgreementScheduleTab contract={contract} onRefresh={fetchContract} />
+    }
+
+    return list
+  }
 
   return (
     <Grid container spacing={6}>
@@ -108,6 +122,7 @@ const ViewContractPage = () => {
         <ContractRight
           tabContentList={tabContentList()}
           unreadNotices={(contract.notices || []).filter(n => !n.is_read).length}
+          showOwnerSchedule={!!hasOwnerSchedule}
         />
       </Grid>
     </Grid>

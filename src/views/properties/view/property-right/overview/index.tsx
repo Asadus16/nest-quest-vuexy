@@ -1,3 +1,6 @@
+// Next Imports
+import dynamic from 'next/dynamic'
+
 // MUI Imports
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -9,6 +12,8 @@ import Divider from '@mui/material/Divider'
 
 // Type Imports
 import type { PropertyDetailType } from '@/types/apps/propertyTypes'
+
+const LocationViewMap = dynamic(() => import('@components/LocationViewMap'), { ssr: false })
 
 const amenityCategories = [
   { key: 'amenities_general' as const, label: 'General' },
@@ -73,6 +78,18 @@ const OverviewTab = ({ property }: { property: PropertyDetailType }) => {
           </CardContent>
         </Card>
       </Grid>
+
+      {/* Location Map */}
+      {property.latitude && property.longitude && (
+        <Grid size={{ xs: 12 }}>
+          <Card>
+            <CardHeader title='Location' />
+            <CardContent>
+              <LocationViewMap latitude={property.latitude} longitude={property.longitude} />
+            </CardContent>
+          </Card>
+        </Grid>
+      )}
 
       {/* Property Features */}
       <Grid size={{ xs: 12 }}>
